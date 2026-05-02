@@ -101,6 +101,51 @@ textarea { line-height: 1.6; }
   animation: shimmer 1.4s infinite;
   border-radius: 6px;
 }
+.rating-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fdfcfb 100%);
+  border: 1px solid #d9d3c9;
+  border-radius: 18px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.95) inset, 0 10px 26px rgba(26,25,22,0.07);
+}
+.rating-card__header {
+  background: linear-gradient(135deg, #020202 0%, #101010 100%);
+  border: 1px solid #242424;
+  border-radius: 15px;
+  color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 10px 18px rgba(0,0,0,0.13);
+}
+.rating-card__eyebrow {
+  color: #c7bda9;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+.rating-card__title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.08;
+}
+.rating-card__subtitle {
+  color: #f0eadf;
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+.rating-card__field-label {
+  color: #817b6d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.rating-card__textarea {
+  box-shadow: inset 0 1px 2px rgba(26,25,22,0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.rating-card__textarea:focus {
+  border-color: var(--accent-mid) !important;
+  box-shadow: 0 0 0 3px oklch(0.95 0.04 250), inset 0 1px 2px rgba(26,25,22,0.04);
+}
 </style>
 </head>
 <body>
@@ -350,17 +395,21 @@ function Toast({ msg, type }) {
 /* ── Rating bar ───────────────────────────────────────────────────────── */
 function RatingBar({ value, onChange, disabled }) {
   return (
-    <div style={{ display:"flex", gap:5, flexWrap:"nowrap", width:"100%" }}>
+    <div style={{
+      display:"grid", gridTemplateColumns:"repeat(4, minmax(0, 1fr))", gap:6, width:"100%",
+      background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:10, padding:4,
+    }}>
       {RATINGS.map(r => {
         const active = value === r;
         const c = RATING_COLORS[r];
         return (
           <button key={r} onClick={() => !disabled && onChange(r)} style={{
-            flex:"1 1 0", minWidth:0, padding:"6px 3px", borderRadius:8, fontSize:"10.5px", fontWeight:700,
-            border:`1.5px solid ${active ? c.border : "var(--border)"}`,
+            minWidth:0, padding:"7px 3px", borderRadius:7, fontSize:"10.5px", fontWeight:800,
+            border:`1px solid ${active ? c.border : "transparent"}`,
             background: active ? c.bg : "var(--surface)",
             color: active ? c.text : "var(--text2)",
             cursor: disabled ? "default" : "pointer", transition:"all 0.13s", outline:"none",
+            boxShadow: active ? "0 1px 4px rgba(26,25,22,0.10)" : "none",
             whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis",
           }}>{r}</button>
         );
@@ -463,29 +512,28 @@ function ImageSection({ sectionId, dateStr, images, onUpdate, disabled }) {
 /* ── Section card ─────────────────────────────────────────────────────── */
 function SectionCard({ section, value, komen, images, onRating, onKomen, onImages, dateStr, disabled }) {
   return (
-    <div style={{
-      background:"var(--surface)", border:"1px solid #d8d2c7", borderRadius:16, padding:18,
-      display:"flex", flexDirection:"column", gap:14,
-      boxShadow:"0 1px 0 rgba(255,255,255,0.9) inset, 0 8px 22px rgba(26,25,22,0.06)",
+    <div className="rating-card" style={{
+      padding:18, display:"flex", flexDirection:"column", gap:14,
     }}>
-      <div style={{
-        background:"#050505", color:"#fff", border:"1px solid #1f1f1f", borderRadius:14,
-        padding:"18px 20px", boxShadow:"inset 0 1px 0 rgba(255,255,255,0.14), 0 8px 16px rgba(0,0,0,0.10)",
+      <div className="rating-card__header" style={{
+        padding:"16px 18px", display:"flex", flexDirection:"column", gap:7,
       }}>
-        <div style={{ fontWeight:800, fontSize:20, letterSpacing:"0.02em", lineHeight:1.1 }}>{section.label}</div>
-        <div style={{ fontSize:13, color:"#e8e1d6", marginTop:7, lineHeight:1.35, fontWeight:600 }}>{section.sub}</div>
+        <div className="rating-card__eyebrow">PENILAIAN HARIAN</div>
+        <div className="rating-card__title">{section.label}</div>
+        <div className="rating-card__subtitle">{section.sub}</div>
       </div>
       <RatingBar value={value} onChange={onRating} disabled={disabled} />
       {section.hasKomen && (
-        <div>
-          <div style={{ fontSize:11, fontWeight:600, color:"var(--text3)", marginBottom:4 }}>KOMEN</div>
+        <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+          <div className="rating-card__field-label">CATATAN PEMERHATIAN</div>
           <textarea value={komen} onChange={e=>onKomen(e.target.value)} disabled={disabled}
-            placeholder="Masukkan komen (jika ada)..." rows={2}
-            style={{ width:"100%", padding:"8px 12px", border:"1px solid var(--border)", borderRadius:8, fontSize:13, color:"var(--text)", background:disabled?"var(--surface2)":"var(--surface)", resize:"vertical", outline:"none" }} />
+            placeholder="Tulis catatan ringkas pemerhatian (jika ada)..." rows={2}
+            className="rating-card__textarea"
+            style={{ width:"100%", padding:"10px 12px", border:"1px solid #d8d2c7", borderRadius:10, fontSize:13, color:"var(--text)", background:disabled?"var(--surface2)":"var(--surface)", resize:"vertical", outline:"none", minHeight:64 }} />
         </div>
       )}
-      <div>
-        <div style={{ fontSize:11, fontWeight:600, color:"var(--text3)", marginBottom:6 }}>GAMBAR</div>
+      <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+        <div className="rating-card__field-label">DOKUMENTASI GAMBAR</div>
         <ImageSection sectionId={section.id} dateStr={dateStr} images={images} onUpdate={onImages} disabled={disabled} />
       </div>
     </div>
