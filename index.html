@@ -642,30 +642,19 @@ function WeeklyGuruPanel({ dateStr, disabled, allTeachers }) {
   const count = selected.length;
   const badge = saving ? "Menyimpan…" : `${count} dipilih · Minggu ${wk.split("-W")[1]}`;
   const badgeColor = saving ? "amber" : count > 0 ? "blue" : "neutral";
-  const selectedNames = count > 0 ? (
-    <div style={{ display:"flex", alignItems:"center", gap:6, minWidth:0 }}>
-      <div style={{ fontSize:10, fontWeight:700, color:"var(--text3)", letterSpacing:"0.04em", flexShrink:0 }}>MINGGU INI</div>
-      <div style={{ display:"flex", flexWrap:"nowrap", gap:5, overflowX:"auto", paddingBottom:2, minWidth:0 }}>
-        {selected.map(name => (
-          <span key={name} style={{
-            display:"inline-flex", alignItems:"center", flex:"0 0 auto", maxWidth:160,
-            padding:"3px 8px", borderRadius:7, background:"var(--accent-light)",
-            border:"1px solid var(--accent-mid)", color:"var(--accent)",
-            fontSize:10, fontWeight:700, lineHeight:1.2, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis",
-          }}>
-            {name}
-          </span>
-        ))}
-      </div>
-    </div>
-  ) : null;
+  const orderedTeachers = allTeachers && allTeachers.length > 0
+    ? [
+        ...selected.filter(name => allTeachers.includes(name)),
+        ...allTeachers.filter(name => !selected.includes(name)),
+      ]
+    : [];
 
   return (
-    <CollapsiblePanel title="GURU BERTUGAS" sub="Tandakan guru bertugas minggu ini" badge={badge} badgeColor={badgeColor} persistentContent={selectedNames}>
+    <CollapsiblePanel title="GURU BERTUGAS" sub="Tandakan guru bertugas minggu ini" badge={badge} badgeColor={badgeColor}>
       <div style={{ paddingTop:14 }}>
         {allTeachers && allTeachers.length > 0 ? (
           <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
-            {allTeachers.map((t, i) => {
+            {orderedTeachers.map((t, i) => {
               const checked = selected.includes(t);
               return (
                 <label key={i} style={{
@@ -698,13 +687,32 @@ function WeeklyGuruPanel({ dateStr, disabled, allTeachers }) {
 }
 
 
-function FormField({ label, sub, children }) {
+function FormField({ label, sub, children, gradient }) {
+  const cardStyle = gradient
+    ? {
+      background:"linear-gradient(180deg, #ffffff 0%, #fdfcfb 100%)",
+      border:"1px solid #d9d3c9", borderRadius:18, padding:18,
+      display:"flex", flexDirection:"column", gap:14,
+      boxShadow:"0 1px 0 rgba(255,255,255,0.95) inset, 0 10px 26px rgba(26,25,22,0.07)",
+    }
+    : { background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)", padding:20, display:"flex", flexDirection:"column", gap:10 };
   return (
-    <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)", padding:20, display:"flex", flexDirection:"column", gap:10 }}>
-      <div>
-        <div style={{ fontWeight:700, fontSize:14, letterSpacing:"0.04em" }}>{label}</div>
-        {sub && <div style={{ fontSize:12, color:"var(--text3)", marginTop:2 }}>{sub}</div>}
-      </div>
+    <div style={cardStyle}>
+      {gradient ? (
+        <div className="rating-card__header" style={{
+          background:gradient, border:"1px solid rgba(255,255,255,0.22)",
+          padding:"17px 18px", display:"flex", flexDirection:"column", gap:6,
+          boxShadow:"inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 18px rgba(26,25,22,0.15)",
+        }}>
+          <div className="rating-card__title" style={{ fontSize:label.length > 18 ? 18 : 20 }}>{label}</div>
+          {sub && <div className="rating-card__subtitle">{sub}</div>}
+        </div>
+      ) : (
+        <div>
+          <div style={{ fontWeight:700, fontSize:14, letterSpacing:"0.04em" }}>{label}</div>
+          {sub && <div style={{ fontSize:12, color:"var(--text3)", marginTop:2 }}>{sub}</div>}
+        </div>
+      )}
       {children}
     </div>
   );
@@ -803,7 +811,11 @@ function TodayReport({ report, teachers, dateStr, onSave, onSubmit, isSaving }) 
 
       {/* Perhimpunan */}
       <div style={{ marginBottom:14 }}>
-        <FormField label="PERHIMPUNAN" sub="Aktiviti / Pengumuman pagi">
+        <FormField
+          label="PERHIMPUNAN"
+          sub="Aktiviti dan pengumuman pagi."
+          gradient="linear-gradient(135deg, #1e1b4b 0%, #3730a3 58%, #6366f1 100%)"
+        >
           <TA value={form.perhimpunan} onChange={v=>upd("perhimpunan",v)} disabled={disabled} placeholder="Cth: 7.30 pagi – Perhimpunan pagi, Bacaan Amanat, Teguran Guru Bertugas..." rows={3} />
         </FormField>
       </div>
@@ -827,7 +839,11 @@ function TodayReport({ report, teachers, dateStr, onSave, onSubmit, isSaving }) 
 
       {/* Aktiviti P&P */}
       <div style={{ marginBottom:14 }}>
-        <FormField label="AKTIVITI PENGAJARAN DAN PEMBELAJARAN">
+        <FormField
+          label="AKTIVITI PENGAJARAN DAN PEMBELAJARAN"
+          sub="Ringkasan aktiviti PdPc."
+          gradient="linear-gradient(135deg, #33206a 0%, #6d28d9 58%, #a78bfa 100%)"
+        >
           <TA value={form.aktiviti} onChange={v=>upd("aktiviti",v)} disabled={disabled} placeholder="Cth: PdPc berjalan dengan baik..." rows={3} />
           <div>
             <div style={{ fontSize:11, fontWeight:600, color:"var(--text3)", marginBottom:6 }}>GAMBAR</div>
@@ -838,7 +854,11 @@ function TodayReport({ report, teachers, dateStr, onSave, onSubmit, isSaving }) 
 
       {/* Pelawat */}
       <div style={{ marginBottom:14 }}>
-        <FormField label="PELAWAT" sub="VIP daripada JPN, PPD, BTP dan Pegawai kementerian sahaja">
+        <FormField
+          label="PELAWAT"
+          sub="Rekod lawatan rasmi."
+          gradient="linear-gradient(135deg, #134e4a 0%, #0f766e 58%, #2dd4bf 100%)"
+        >
           <TA value={form.pelawat} onChange={v=>upd("pelawat",v)} disabled={disabled} placeholder="Cth: Tiada / nama pelawat dan tujuan..." rows={2} />
           <div>
             <div style={{ fontSize:11, fontWeight:600, color:"var(--text3)", marginBottom:6 }}>GAMBAR</div>
@@ -849,7 +869,11 @@ function TodayReport({ report, teachers, dateStr, onSave, onSubmit, isSaving }) 
 
       {/* Hal-hal Lain */}
       <div style={{ marginBottom:14 }}>
-        <FormField label="HAL-HAL LAIN">
+        <FormField
+          label="HAL-HAL LAIN"
+          sub="Perkara penting lain."
+          gradient="linear-gradient(135deg, #3b2f1c 0%, #a16207 58%, #facc15 100%)"
+        >
           <TA value={form.halLain} onChange={v=>upd("halLain",v)} disabled={disabled} placeholder="Cth: Tiada / perkara penting lain..." rows={2} />
           <div>
             <div style={{ fontSize:11, fontWeight:600, color:"var(--text3)", marginBottom:6 }}>GAMBAR</div>
