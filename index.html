@@ -472,7 +472,7 @@ function SectionCard({ section, value, komen, images, onRating, onKomen, onImage
 }
 
 /* ── Collapsible dropdown panel ───────────────────────────────────────── */
-function CollapsiblePanel({ title, sub, badge, badgeColor="neutral", children, defaultOpen=false }) {
+function CollapsiblePanel({ title, sub, badge, badgeColor="neutral", children, defaultOpen=false, persistentContent=null }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)", overflow:"hidden" }}>
@@ -494,6 +494,11 @@ function CollapsiblePanel({ title, sub, badge, badgeColor="neutral", children, d
           </svg>
         </div>
       </button>
+      {persistentContent && (
+        <div style={{ padding:"0 20px 14px" }}>
+          {persistentContent}
+        </div>
+      )}
       {open && (
         <div style={{ padding:"0 20px 20px", borderTop:"1px solid var(--border)" }}>
           {children}
@@ -572,9 +577,26 @@ function WeeklyGuruPanel({ dateStr, disabled, allTeachers }) {
   const count = selected.length;
   const badge = saving ? "Menyimpan…" : `${count} dipilih · Minggu ${wk.split("-W")[1]}`;
   const badgeColor = saving ? "amber" : count > 0 ? "blue" : "neutral";
+  const selectedNames = count > 0 ? (
+    <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+      <div style={{ fontSize:11, fontWeight:700, color:"var(--text3)", letterSpacing:"0.04em" }}>GURU BERTUGAS MINGGU INI</div>
+      <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+        {selected.map(name => (
+          <span key={name} style={{
+            display:"inline-flex", alignItems:"center", maxWidth:"100%",
+            padding:"5px 10px", borderRadius:8, background:"var(--accent-light)",
+            border:"1px solid var(--accent-mid)", color:"var(--accent)",
+            fontSize:12, fontWeight:700, lineHeight:1.35, overflowWrap:"anywhere",
+          }}>
+            {name}
+          </span>
+        ))}
+      </div>
+    </div>
+  ) : null;
 
   return (
-    <CollapsiblePanel title="GURU BERTUGAS" sub="Tandakan guru bertugas minggu ini" badge={badge} badgeColor={badgeColor}>
+    <CollapsiblePanel title="GURU BERTUGAS" sub="Tandakan guru bertugas minggu ini" badge={badge} badgeColor={badgeColor} persistentContent={selectedNames}>
       <div style={{ paddingTop:14 }}>
         {allTeachers && allTeachers.length > 0 ? (
           <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
