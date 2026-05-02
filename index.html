@@ -114,12 +114,6 @@ textarea { line-height: 1.6; }
   color: #ffffff;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 10px 18px rgba(0,0,0,0.13);
 }
-.rating-card__eyebrow {
-  color: #c7bda9;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.13em;
-}
 .rating-card__title {
   font-size: 20px;
   font-weight: 800;
@@ -182,11 +176,11 @@ const RATING_COLORS = {
 };
 
 const SECTIONS = [
-  { id:"disiplin",   label:"DISIPLIN",        sub:"Pemerhatian adab, tingkah laku dan kawalan murid.",                 hasKomen:true },
-  { id:"kawasan",    label:"KAWASAN SEKOLAH",  sub:"Pemerhatian kebersihan, keceriaan dan susun atur persekitaran.",    hasKomen:true },
-  { id:"kantin",     label:"KANTIN",           sub:"Pemerhatian kebersihan, pengurusan murid dan suasana kantin.",      hasKomen:true },
-  { id:"kelas",      label:"KELAS",            sub:"Pemerhatian kekemasan, kebersihan dan suasana pembelajaran.",       hasKomen:true },
-  { id:"keselamatan",label:"KESELAMATAN",      sub:"Pemantauan keselamatan murid dan pergerakan sekitar sekolah.",      hasKomen:true },
+  { id:"disiplin",   label:"DISIPLIN",        sub:"Adab dan kawalan murid.",             hasKomen:true },
+  { id:"kawasan",    label:"KAWASAN SEKOLAH",  sub:"Kebersihan kawasan sekolah.",         hasKomen:true },
+  { id:"kantin",     label:"KANTIN",           sub:"Kebersihan dan suasana kantin.",      hasKomen:true },
+  { id:"kelas",      label:"KELAS",            sub:"Kebersihan dan kekemasan kelas.",     hasKomen:true },
+  { id:"keselamatan",label:"KESELAMATAN",      sub:"Keselamatan murid dan persekitaran.", hasKomen:true },
 ];
 
 /* ── Helpers ──────────────────────────────────────────────────────────── */
@@ -516,9 +510,8 @@ function SectionCard({ section, value, komen, images, onRating, onKomen, onImage
       padding:18, display:"flex", flexDirection:"column", gap:14,
     }}>
       <div className="rating-card__header" style={{
-        padding:"16px 18px", display:"flex", flexDirection:"column", gap:7,
+        padding:"17px 18px", display:"flex", flexDirection:"column", gap:6,
       }}>
-        <div className="rating-card__eyebrow">PENILAIAN HARIAN</div>
         <div className="rating-card__title">{section.label}</div>
         <div className="rating-card__subtitle">{section.sub}</div>
       </div>
