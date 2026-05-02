@@ -137,11 +137,11 @@ const RATING_COLORS = {
 };
 
 const SECTIONS = [
-  { id:"disiplin",   label:"DISIPLIN",        sub:"Tahap disiplin murid keseluruhan",   hasKomen:true },
-  { id:"kawasan",    label:"KAWASAN SEKOLAH",  sub:"Tahap kebersihan keseluruhan",       hasKomen:true },
-  { id:"kantin",     label:"KANTIN",           sub:"Tahap kebersihan keseluruhan",       hasKomen:true },
-  { id:"kelas",      label:"KELAS",            sub:"Tahap kebersihan keseluruhan",       hasKomen:true },
-  { id:"keselamatan",label:"KESELAMATAN",      sub:"Tahap keselamatan keseluruhan",      hasKomen:true },
+  { id:"disiplin",   label:"DISIPLIN",        sub:"Pemerhatian adab, tingkah laku dan kawalan murid.",                 hasKomen:true },
+  { id:"kawasan",    label:"KAWASAN SEKOLAH",  sub:"Pemerhatian kebersihan, keceriaan dan susun atur persekitaran.",    hasKomen:true },
+  { id:"kantin",     label:"KANTIN",           sub:"Pemerhatian kebersihan, pengurusan murid dan suasana kantin.",      hasKomen:true },
+  { id:"kelas",      label:"KELAS",            sub:"Pemerhatian kekemasan, kebersihan dan suasana pembelajaran.",       hasKomen:true },
+  { id:"keselamatan",label:"KESELAMATAN",      sub:"Pemantauan keselamatan murid dan pergerakan sekitar sekolah.",      hasKomen:true },
 ];
 
 /* ── Helpers ──────────────────────────────────────────────────────────── */
@@ -463,10 +463,17 @@ function ImageSection({ sectionId, dateStr, images, onUpdate, disabled }) {
 /* ── Section card ─────────────────────────────────────────────────────── */
 function SectionCard({ section, value, komen, images, onRating, onKomen, onImages, dateStr, disabled }) {
   return (
-    <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)", padding:20, display:"flex", flexDirection:"column", gap:12 }}>
-      <div>
-        <div style={{ fontWeight:700, fontSize:14, letterSpacing:"0.04em" }}>{section.label}</div>
-        <div style={{ fontSize:12, color:"var(--text3)", marginTop:2 }}>{section.sub}</div>
+    <div style={{
+      background:"var(--surface)", border:"1px solid #d8d2c7", borderRadius:16, padding:18,
+      display:"flex", flexDirection:"column", gap:14,
+      boxShadow:"0 1px 0 rgba(255,255,255,0.9) inset, 0 8px 22px rgba(26,25,22,0.06)",
+    }}>
+      <div style={{
+        background:"#050505", color:"#fff", border:"1px solid #1f1f1f", borderRadius:14,
+        padding:"18px 20px", boxShadow:"inset 0 1px 0 rgba(255,255,255,0.14), 0 8px 16px rgba(0,0,0,0.10)",
+      }}>
+        <div style={{ fontWeight:800, fontSize:20, letterSpacing:"0.02em", lineHeight:1.1 }}>{section.label}</div>
+        <div style={{ fontSize:13, color:"#e8e1d6", marginTop:7, lineHeight:1.35, fontWeight:600 }}>{section.sub}</div>
       </div>
       <RatingBar value={value} onChange={onRating} disabled={disabled} />
       {section.hasKomen && (
