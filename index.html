@@ -154,6 +154,8 @@ const SCHOOL_NAME = "SK SRI AMAN";
 const DAYS_MS = ["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
 const DB_PATH = "laporanbertugasapp/data_2026_week15";
 const DB_WEEKLY_PATH = "laporanbertugasapp/weekly_2026_week15";
+const DB_LEGACY_PATH = "laporanbertugasapp/data";
+const DB_LEGACY_WEEKLY_PATH = "laporanbertugasapp/weekly";
 const SCHOOL_WEEK15_START = "2026-05-04";
 const SCHOOL_WEEK15_NUMBER = 15;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -207,6 +209,14 @@ function getWeekNumber(date) {
   return SCHOOL_WEEK15_NUMBER + diffWeeks;
 }
 
+function getIsoWeekNumber(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dn = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dn);
+  const ys = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return Math.ceil((((d - ys) / 86400000) + 1) / 7);
+}
+
 function formatDate(dateStr) {
   const d = new Date(dateStr + "T00:00:00");
   const day = String(d.getDate()).padStart(2,"0");
@@ -255,6 +265,16 @@ async function fbGetReport(dateStr) {
   const { db, ref, get } = await waitForFirebase();
   const snap = await get(ref(db, `${DB_PATH}/${dateStr}`));
   return snap.exists() ? snap.val() : null;
+}
+
+async function fbGetLegacyReport(dateStr) {
+  const { db, ref, get } = await waitForFirebase();
+  const snap = await get(ref(db, `${DB_LEGACY_PATH}/${dateStr}`));
+  return snap.exists() ? snap.val() : null;
+}
+
+async function fbGetAnyReport(dateStr) {
+  return await fbGetReport(dateStr) || await fbGetLegacyReport(dateStr);
 }
 
 async function fbSaveReport(report) {
@@ -322,10 +342,24 @@ function weekKey(dateStr) {
   return `${d.getFullYear()}-W${String(wk).padStart(2,"0")}`;
 }
 
+function legacyWeekKey(dateStr) {
+  const d = parseLocalDate(dateStr);
+  const wk = getIsoWeekNumber(d);
+  return `${d.getFullYear()}-W${String(wk).padStart(2,"0")}`;
+}
+
 async function fbGetWeeklyTeachers(dateStr) {
   const { db, ref, get } = await waitForFirebase();
   const snap = await get(ref(db, `${DB_WEEKLY_PATH}/${weekKey(dateStr)}`));
   return snap.exists() ? snap.val().teachers : null;
+}
+
+async function fbGetAnyWeeklyTeachers(dateStr) {
+  const { db, ref, get } = await waitForFirebase();
+  const current = await get(ref(db, `${DB_WEEKLY_PATH}/${weekKey(dateStr)}`));
+  if (current.exists()) return current.val().teachers || null;
+  const legacy = await get(ref(db, `${DB_LEGACY_WEEKLY_PATH}/${legacyWeekKey(dateStr)}`));
+  return legacy.exists() ? legacy.val().teachers : null;
 }
 
 async function fbSaveWeeklyTeachers(dateStr, teachers) {
@@ -992,11 +1026,12 @@ function ReadOnlyValue({ children, empty="-" }) {
 function WeeklyGuruReadOnly({ dateStr }) {
   const [selected, setSelected] = useState(null);
   useEffect(() => {
-    let unsub;
-    fbListenWeeklyTeachers(dateStr, teachers => {
-      setSelected(teachers && teachers.length > 0 ? teachers : []);
-    }).then(u => { unsub = u; });
-    return () => { if (unsub) unsub(); };
+    let cancelled = false;
+    setSelected(null);
+    fbGetAnyWeeklyTeachers(dateStr)
+      .then(teachers => { if (!cancelled) setSelected(teachers && teachers.length > 0 ? teachers : []); })
+      .catch(() => { if (!cancelled) setSelected([]); });
+    return () => { cancelled = true; };
   }, [dateStr]);
 
   return (
@@ -1117,15 +1152,31 @@ function ReportReadOnlyBody({ report, teachers }) {
 
 function HistoryList({ reports }) {
   const [selectedDate, setSelectedDate] = useState("");
-  const selectedReport = reports.find(r => r.date === selectedDate);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [loadingReport, setLoadingReport] = useState(false);
   const maxDate = yesterdayStr();
 
-  if (!reports.length) return (
-    <div style={{ textAlign:"center", padding:"40px 20px", color:"var(--text3)" }}>
-      <div style={{ fontSize:36, marginBottom:10 }}>📋</div>
-      <div style={{ fontWeight:600 }}>Tiada rekod laporan lama</div>
-    </div>
-  );
+  useEffect(() => {
+    if (!selectedDate) {
+      setSelectedReport(null);
+      setLoadingReport(false);
+      return;
+    }
+    const cached = reports.find(r => r.date === selectedDate);
+    if (cached) {
+      setSelectedReport(cached);
+      setLoadingReport(false);
+      return;
+    }
+    let cancelled = false;
+    setLoadingReport(true);
+    setSelectedReport(null);
+    fbGetAnyReport(selectedDate)
+      .then(report => { if (!cancelled) setSelectedReport(report); })
+      .catch(() => { if (!cancelled) setSelectedReport(null); })
+      .finally(() => { if (!cancelled) setLoadingReport(false); });
+    return () => { cancelled = true; };
+  }, [selectedDate, reports]);
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
@@ -1143,6 +1194,10 @@ function HistoryList({ reports }) {
       {!selectedDate ? (
         <div style={{ textAlign:"center", padding:"36px 20px", color:"var(--text3)", fontSize:13, fontWeight:600 }}>
           Pilih tarikh untuk melihat laporan lama.
+        </div>
+      ) : loadingReport ? (
+        <div style={{ padding:"32px 20px", display:"flex", alignItems:"center", justifyContent:"center", gap:10, color:"var(--text3)", fontSize:13, fontWeight:600 }}>
+          <Spinner size={16} /> Memuatkan rekod tarikh dipilih...
         </div>
       ) : selectedReport ? (
         <ReportReadOnlyBody report={selectedReport} teachers={[]} />
