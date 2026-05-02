@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laporan Guru Bertugas</title>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<!-- Firebase -->
+<script type="module" id="firebase-init">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBSWbXoKgQt1E8xvJa9zaKyw3e9V_EMxAE",
+    authDomain: "sk-sri-aman-database.firebaseapp.com",
+    databaseURL: "https://sk-sri-aman-database-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "sk-sri-aman-database",
+    storageBucket: "sk-sri-aman-database.firebasestorage.app",
+    messagingSenderId: "810640165554",
+    appId: "1:810640165554:web:b3ad2dc6f1583ec2a657ab",
+    measurementId: "G-EW575JGKQR"
+  };
+
+  const pinjamanConfig = {
+    apiKey: "AIzaSyCpRe6EpshreXgNW3CQe6ACZkxxBlH0rnI",
+    authDomain: "pinjaman-4b662.firebaseapp.com",
+    databaseURL: "https://pinjaman-4b662-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "pinjaman-4b662",
+    storageBucket: "pinjaman-4b662.firebasestorage.app",
+    messagingSenderId: "840792083486",
+    appId: "1:840792083486:web:6086e62521fd771063320f",
+    measurementId: "G-R6WVPCJ4KT"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const pinjamanApp = initializeApp(pinjamanConfig, "pinjaman");
+  const db = getDatabase(app);
+  const pinjamanDb = getDatabase(pinjamanApp);
+  const storage = getStorage(app);
+
+  window.__firebase = {
+    db, pinjamanDb, storage,
+    ref, set, get, onValue, update,
+    sRef, uploadBytes, getDownloadURL, deleteObject,
+  };
+  window.dispatchEvent(new Event("firebase-ready"));
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f5f4f1;
+  --surface: #ffffff;
+  --surface2: #f9f8f6;
+  --border: #e2dfd8;
+  --border2: #ccc9c0;
+  --text: #1a1916;
+  --text2: #5a5850;
+  --text3: #9a9688;
+  --accent: oklch(0.45 0.16 250);
+  --accent-light: oklch(0.95 0.04 250);
+  --accent-mid: oklch(0.72 0.10 250);
+  --green: oklch(0.48 0.14 155);
+  --green-light: oklch(0.95 0.05 155);
+  --red: oklch(0.50 0.18 25);
+  --red-light: oklch(0.96 0.05 25);
+  --amber: oklch(0.58 0.14 75);
+  --amber-light: oklch(0.96 0.05 75);
+  --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.05);
+  --shadow-lg: 0 4px 24px rgba(0,0,0,0.10);
+  --radius: 14px;
+  --radius-sm: 9px;
+}
+html, body { height: 100%; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+#root { min-height: 100vh; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+input, textarea, select { font-family: inherit; }
+button { font-family: inherit; }
+textarea { line-height: 1.6; }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 6px;
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ── Constants ─────────────────────────────────────────────────────────── */
+const SCHOOL_CODE = "PBB1013";
+const SCHOOL_NAME = "SK SRI AMAN";
+const DAYS_MS = ["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
+const DB_PATH = "laporanbertugasapp/data";
+const DB_WEEKLY_PATH = "laporanbertugasapp/weekly";
+
+const DEFAULT_TEACHERS = []; // Will be fetched from Firebase pinjaman DB
+
+const PENTADBIR = [
+  "EN. MAHATHIR BIN MD SAHAK (GURU BESAR)",
+  "EN. MUHAIZAM BIN MD MOKHTAR (PK PENTADBIRAN)",
+  "PN. SHARIMAH (PK HEM)",
+  "EN. SANGGARA (PK KOKO)",
+];
+
+const RATINGS = ["Lemah","Memuaskan","Baik","Cemerlang"];
+const RATING_COLORS = {
+  "Lemah":     { bg:"var(--red-light)",   border:"var(--red)",   text:"var(--red)" },
+  "Memuaskan": { bg:"var(--amber-light)", border:"var(--amber)", text:"var(--amber)" },
+  "Baik":      { bg:"var(--green-light)", border:"var(--green)", text:"var(--green)" },
+  "Cemerlang": { bg:"var(--accent-light)",border:"var(--accent)",text:"var(--accent)" },
+};
+
+const SECTIONS = [
+  { id:"disiplin",   label:"DISIPLIN",        sub:"Tahap disiplin murid keseluruhan",   hasKomen:true },
+  { id:"kawasan",    label:"KAWASAN SEKOLAH",  sub:"Tahap kebersihan keseluruhan",       hasKomen:true },
+  { id:"kantin",     label:"KANTIN",           sub:"Tahap kebersihan keseluruhan",       hasKomen:true },
+  { id:"kelas",      label:"KELAS",            sub:"Tahap kebersihan keseluruhan",       hasKomen:true },
+  { id:"keselamatan",label:"KESELAMATAN",      sub:"Tahap keselamatan keseluruhan",      hasKomen:true },
+];
+
+/* ── Helpers ──────────────────────────────────────────────────────────── */
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function getWeekNumber(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dn = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dn);
+  const ys = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return Math.ceil((((d - ys) / 86400000) + 1) / 7);
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr + "T00:00:00");
+  const day = String(d.getDate()).padStart(2,"0");
+  const months = ["JANUARI","FEBRUARI","MAC","APRIL","MEI","JUN","JULAI","OGOS","SEPTEMBER","OKTOBER","NOVEMBER","DISEMBER"];
+  return `${day} ${months[d.getMonth()]} ${d.getFullYear()} (${DAYS_MS[d.getDay()]})`;
+}
+
+function emptyReport(date) {
+  const ratings = {}; const komen = {}; const images = {};
+  SECTIONS.forEach(s => { ratings[s.id] = null; komen[s.id] = ""; images[s.id] = []; });
+  // extra image slots for non-rated sections
+  images["aktiviti"] = [];
+  images["pelawat"] = [];
+  images["halLain"] = [];
+  return {
+    date: date || todayStr(),
+    perhimpunan: "", ratings, komen, images,
+    aktiviti: "", pelawat: "", halLain: "",
+    absentTeachers: [],
+    pelapor: "",
+    disemakOleh: "",
+    submitted: false,
+    updatedAt: Date.now(),
+  };
+}
+
+/* ── Firebase helpers ─────────────────────────────────────────────────── */
+function waitForFirebase() {
+  return new Promise(resolve => {
+    if (window.__firebase) return resolve(window.__firebase);
+    window.addEventListener("firebase-ready", () => resolve(window.__firebase), { once: true });
+  });
+}
+
+async function fbGetReport(dateStr) {
+  const { db, ref, get } = await waitForFirebase();
+  const snap = await get(ref(db, `${DB_PATH}/${dateStr}`));
+  return snap.exists() ? snap.val() : null;
+}
+
+async function fbSaveReport(report) {
+  const { db, ref, set } = await waitForFirebase();
+  await set(ref(db, `${DB_PATH}/${report.date}`), { ...report, updatedAt: Date.now() });
+}
+
+async function fbListenReport(dateStr, cb) {
+  const { db, ref, onValue } = await waitForFirebase();
+  const unsubscribe = onValue(ref(db, `${DB_PATH}/${dateStr}`), snap => {
+    cb(snap.exists() ? snap.val() : null);
+  });
+  return unsubscribe;
+}
+
+async function fbListenAllDates(cb) {
+  const { db, ref, onValue } = await waitForFirebase();
+  const unsubscribe = onValue(ref(db, DB_PATH), snap => {
+    if (!snap.exists()) return cb([]);
+    const all = Object.values(snap.val()).sort((a,b) => b.date.localeCompare(a.date));
+    cb(all);
+  });
+  return unsubscribe;
+}
+
+async function fbUploadImage(dateStr, sectionId, file) {
+  const { storage, sRef, uploadBytes, getDownloadURL } = await waitForFirebase();
+  const path = `laporanbertugasapp/images/${dateStr}/${sectionId}/${Date.now()}_${file.name}`;
+  const storageRef = sRef(storage, path);
+  const snap = await uploadBytes(storageRef, file);
+  const url = await getDownloadURL(snap.ref);
+  return { url, path, name: file.name };
+}
+
+async function fbDeleteImage(storagePath) {
+  const { storage, sRef, deleteObject } = await waitForFirebase();
+  try { await deleteObject(sRef(storage, storagePath)); } catch(e) {}
+}
+
+// Admin verification
+async function fbVerifyReport(dateStr, pentadbir) {
+  const { db, ref, update } = await waitForFirebase();
+  await update(ref(db, `${DB_PATH}/${dateStr}`), {
+    verified: true,
+    verifiedBy: pentadbir,
+    verifiedAt: Date.now(),
+  });
+}
+
+async function fbVerifyWeek(weekNum, year, pentadbir, dates) {
+  const { db, ref, update } = await waitForFirebase();
+  const updates = {};
+  dates.forEach(d => {
+    updates[`${DB_PATH}/${d}/verified`] = true;
+    updates[`${DB_PATH}/${d}/verifiedBy`] = pentadbir;
+    updates[`${DB_PATH}/${d}/verifiedAt`] = Date.now();
+  });
+  await update(ref(db), updates);
+}
+
+// Weekly guru bertugas
+function weekKey(dateStr) {
+  const d = new Date(dateStr + "T00:00:00");
+  const wk = getWeekNumber(d);
+  return `${d.getFullYear()}-W${String(wk).padStart(2,"0")}`;
+}
+
+async function fbGetWeeklyTeachers(dateStr) {
+  const { db, ref, get } = await waitForFirebase();
+  const snap = await get(ref(db, `${DB_WEEKLY_PATH}/${weekKey(dateStr)}`));
+  return snap.exists() ? snap.val().teachers : null;
+}
+
+async function fbSaveWeeklyTeachers(dateStr, teachers) {
+  const { db, ref, set } = await waitForFirebase();
+  await set(ref(db, `${DB_WEEKLY_PATH}/${weekKey(dateStr)}`), { teachers, updatedAt: Date.now() });
+}
+
+async function fbListenWeeklyTeachers(dateStr, cb) {
+  const { db, ref, onValue } = await waitForFirebase();
+  const unsub = onValue(ref(db, `${DB_WEEKLY_PATH}/${weekKey(dateStr)}`), snap => {
+    cb(snap.exists() ? snap.val().teachers : null);
+  });
+  return unsub;
+}
+
+// Fetch teachers from pinjaman Firebase DB
+async function fbFetchAllGuru() {
+  const { pinjamanDb, ref, get } = await waitForFirebase();
+  try {
+    const snap = await get(ref(pinjamanDb, "guru"));
+    if (!snap.exists()) return [];
+    const data = snap.val();
+    // data is { "1": { nama, telefon }, "2": {...}, ... }
+    return Object.values(data)
+      .filter(g => g && g.nama)
+      .map(g => g.nama.trim().toUpperCase())
+      .sort();
+  } catch(e) {
+    console.error("Gagal fetch guru:", e);
+    return [];
+  }
+}
+
+
+function Badge({ children, color="neutral" }) {
+  const map = {
+    neutral:{ background:"var(--surface2)", color:"var(--text2)",  border:"1px solid var(--border)" },
+    green:  { background:"var(--green-light)",  color:"var(--green)",  border:"1px solid var(--green)" },
+    red:    { background:"var(--red-light)",    color:"var(--red)",    border:"1px solid var(--red)" },
+    blue:   { background:"var(--accent-light)", color:"var(--accent)", border:"1px solid var(--accent)" },
+    amber:  { background:"var(--amber-light)",  color:"var(--amber)",  border:"1px solid var(--amber)" },
+  };
+  return <span style={{ display:"inline-flex", alignItems:"center", padding:"2px 10px", borderRadius:99, fontSize:11, fontWeight:600, letterSpacing:"0.03em", whiteSpace:"nowrap", ...map[color] }}>{children}</span>;
+}
+
+function Spinner({ size=18, color="var(--accent)" }) {
+  return <div style={{ width:size, height:size, border:`2px solid ${color}30`, borderTopColor:color, borderRadius:"50%", animation:"spin 0.7s linear infinite", flexShrink:0 }} />;
+}
+
+function Toast({ msg, type }) {
+  return (
+    <div style={{ position:"fixed", bottom:24, left:"50%", transform:"translateX(-50%)", zIndex:9999,
+      background: type==="error" ? "var(--red)" : type==="info" ? "var(--accent)" : "var(--green)",
+      color:"#fff", padding:"10px 22px", borderRadius:99, fontSize:13, fontWeight:700,
+      boxShadow:"var(--shadow-lg)", animation:"fadeInUp 0.2s ease", whiteSpace:"nowrap" }}>
+      {msg}
+    </div>
+  );
+}
+
+/* ── Rating bar ───────────────────────────────────────────────────────── */
+function RatingBar({ value, onChange, disabled }) {
+  return (
+    <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+      {RATINGS.map(r => {
+        const active = value === r;
+        const c = RATING_COLORS[r];
+        return (
+          <button key={r} onClick={() => !disabled && onChange(r)} style={{
+            padding:"6px 16px", borderRadius:8, fontSize:13, fontWeight:600,
+            border:`1.5px solid ${active ? c.border : "var(--border)"}`,
+            background: active ? c.bg : "var(--surface)",
+            color: active ? c.text : "var(--text2)",
+            cursor: disabled ? "default" : "pointer", transition:"all 0.13s", outline:"none",
+          }}>{r}</button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── Image uploader per section ───────────────────────────────────────── */
+function ImageSection({ sectionId, dateStr, images, onUpdate, disabled }) {
+  const [uploading, setUploading] = useState(false);
+  const [lightbox, setLightbox] = useState(null);
+  const inputRef = useRef();
+
+  async function handleFiles(files) {
+    if (!files || !files.length) return;
+    setUploading(true);
+    const newImgs = [];
+    for (const file of Array.from(files)) {
+      try {
+        const img = await fbUploadImage(dateStr, sectionId, file);
+        newImgs.push(img);
+      } catch(e) {
+        console.error("Upload error", e);
+      }
+    }
+    setUploading(false);
+    onUpdate([...(images||[]), ...newImgs]);
+  }
+
+  async function handleDelete(img, idx) {
+    if (!confirm("Padam gambar ini?")) return;
+    if (img.path) await fbDeleteImage(img.path);
+    onUpdate((images||[]).filter((_,i) => i !== idx));
+  }
+
+  return (
+    <div>
+      {/* Thumbnails */}
+      {images && images.length > 0 && (
+        <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:10 }}>
+          {images.map((img, idx) => (
+            <div key={idx} style={{ position:"relative", width:72, height:72, borderRadius:8, overflow:"hidden", border:"1px solid var(--border)", cursor:"pointer" }}
+              onClick={() => setLightbox(img.url)}>
+              <img src={img.url} alt={img.name} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+              {!disabled && (
+                <button onClick={e => { e.stopPropagation(); handleDelete(img, idx); }} style={{
+                  position:"absolute", top:3, right:3, width:20, height:20,
+                  background:"rgba(0,0,0,0.65)", border:"none", borderRadius:99,
+                  color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                }}>×</button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Upload button */}
+      {!disabled && (
+        <button onClick={() => inputRef.current.click()} style={{
+          display:"inline-flex", alignItems:"center", gap:6,
+          padding:"6px 14px", borderRadius:8, border:"1.5px dashed var(--border2)",
+          background:"transparent", color:"var(--text3)", cursor:"pointer",
+          fontSize:12, fontWeight:600, transition:"all 0.13s",
+        }}
+        onMouseEnter={e=>{ e.currentTarget.style.borderColor="var(--accent)"; e.currentTarget.style.color="var(--accent)"; }}
+        onMouseLeave={e=>{ e.currentTarget.style.borderColor="var(--border2)"; e.currentTarget.style.color="var(--text3)"; }}
+        >
+          {uploading ? <Spinner size={14} /> : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          )}
+          {uploading ? "Memuat naik..." : "Tambah Gambar"}
+        </button>
+      )}
+      <input ref={inputRef} type="file" accept="image/*" multiple style={{ display:"none" }}
+        onChange={e => handleFiles(e.target.files)} />
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{
+          position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:9000,
+          display:"flex", alignItems:"center", justifyContent:"center", padding:24,
+        }}>
+          <img src={lightbox} style={{ maxWidth:"100%", maxHeight:"90vh", borderRadius:12, objectFit:"contain" }} />
+          <button onClick={() => setLightbox(null)} style={{
+            position:"fixed", top:20, right:20, width:40, height:40,
+            background:"rgba(255,255,255,0.15)", border:"none", borderRadius:99,
+            color:"#fff", fontSize:22, cursor:"pointer",
+          }}>×</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Section card ─────────────────────────────────────────────────────── */
+function SectionCard({ section, value, komen, images, onRating, onKomen, onImages, dateStr, disabled }) {
+  return (
+    <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)", padding:20, display:"flex", flexDirection:"column", gap:12 }}>
+      <div>
+        <div style={{ fontWeight:700, fontSize:14, letterSpacing:"0.04em" }}>{section.label}</div>
+        <div style={{ fontSize:12, color:"var(--text3)", marginTop:2 }}>{section.sub}</div>
+      </div>
+      <RatingBar value={value} onChange={onRating} disabled={disabled} />
+      {section.hasKomen && (
+        <div>
+          <div style={{ fontSize:11, fontWeight:600, color:"var(--text3)", marginBottom:4 }}>KOMEN</div>
+          <textarea value={komen} onChange={e=>onKomen(e.target.value)} disabled={disabled}
+            placeholder="Masukkan komen (jika ada)..." rows={2}
+            style={{ width:"100%", padding:"8px 12px", border:"1px solid var(--border)", borderRadius:8, fontSize:13, color:"var(--text)", background:disabled?"var(--surface2)":"var(--surface)", resize:"vertical", outline:"none" }} />
+        </div>
+      )}
+      <div>
+        <div style={{ fontSize:11, fontWeight:600, color:"var(--text3)", marginBottom:6 }}>GAMBAR</div>
+        <ImageSection sectionId={section.id} dateStr={dateStr} images={images} onUpdate={onImages} disabled={disabled} />
+      </div>
+    </div>
+  );
+}
+
+/* ── Collapsible dropdown panel ───────────────────────────────────────── */
+function CollapsiblePanel({ title, sub, badge, badgeColor="neutral", children, defaultOpen=false }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)", overflow:"hidden" }}>
+      <button onClick={() => setOpen(o => !o)} style={{
+        width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between",
+        padding:"16px 20px", background:"transparent", border:"none", cursor:"pointer", gap:8, minWidth:0,
+      }}>
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:2, minWidth:0, flex:1 }}>
+          <div style={{ fontWeight:700, fontSize:14, letterSpacing:"0.04em", color:"var(--text)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", width:"100%" }}>{title}</div>
+          {sub && <div style={{ fontSize:12, color:"var(--text3)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", width:"100%" }}>{sub}</div>}
+        </div>
+        <div style={{ display:"flex", alignItems:"center", gap:10, flexShrink:0, marginLeft:12 }}>
+          {badge !== undefined && badge !== null && (
+            <Badge color={badgeColor}>{badge}</Badge>
+          )}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            style={{ transition:"transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+      </button>
+      {open && (
+        <div style={{ padding:"0 20px 20px", borderTop:"1px solid var(--border)" }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Absent panel ─────────────────────────────────────────────────────── */
+function AbsentPanel({ teachers, absentList: absentListRaw, onChange, disabled }) {
+  const absentList = absentListRaw || [];
+  const count = absentList.length;
+  const badgeLabel = count > 0 ? `${count} tidak hadir` : "Semua hadir";
+  const badgeColor = count > 0 ? "red" : "green";
+
+  return (
+    <CollapsiblePanel
+      title="GURU TIDAK HADIR"
+      sub="Tandakan guru yang tidak hadir"
+      badge={badgeLabel}
+      badgeColor={badgeColor}
+    >
+      <div style={{ display:"flex", flexDirection:"column", gap:7, paddingTop:14 }}>
+        {teachers.map((t,i) => {
+          const checked = absentList.includes(t);
+          return (
+            <label key={i} style={{
+              display:"flex", alignItems:"center", gap:10, padding:"9px 14px", borderRadius:8,
+              border:`1.5px solid ${checked ? "var(--red)" : "var(--border)"}`,
+              background: checked ? "var(--red-light)" : "var(--surface2)",
+              cursor: disabled ? "default" : "pointer", transition:"all 0.13s",
+            }}>
+              <input type="checkbox" checked={checked} disabled={disabled}
+                onChange={e => onChange(e.target.checked ? [...absentList,t] : absentList.filter(x=>x!==t))}
+                style={{ width:16, height:16, accentColor:"var(--red)", cursor:"pointer" }} />
+              <span style={{ fontSize:13, fontWeight:checked?600:400, color:checked?"var(--red)":"var(--text)" }}>{t}</span>
+            </label>
+          );
+        })}
+      </div>
+      {count > 0 && (
+        <div style={{ marginTop:12, padding:"10px 14px", borderRadius:8, background:"var(--red-light)", border:"1px solid var(--red)", fontSize:13, color:"var(--red)", fontWeight:600 }}>
+          {count} tidak hadir: {absentList.join(", ")}
+        </div>
+      )}
+    </CollapsiblePanel>
+  );
+}
+
+/* ── Weekly Guru Bertugas Panel ───────────────────────────────────────── */
+function WeeklyGuruPanel({ dateStr, disabled, allTeachers }) {
+  const [selected, setSelected] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const wk = weekKey(dateStr);
+
+  useEffect(() => {
+    let unsub;
+    fbListenWeeklyTeachers(dateStr, teachers => {
+      setSelected(teachers && teachers.length > 0 ? teachers : []);
+    }).then(u => { unsub = u; });
+    return () => { if (unsub) unsub(); };
+  }, [dateStr]);
+
+  async function handleToggle(name) {
+    if (disabled) return;
+    const next = selected.includes(name)
+      ? selected.filter(x => x !== name)
+      : [...selected, name];
+    setSelected(next);
+    setSaving(true);
+    try { await fbSaveWeeklyTeachers(dateStr, next); } catch(e) {}
+    setSaving(false);
+  }
+
+  const count = selected.length;
+  const badge = saving ? "Menyimpan…" : `${count} dipilih · Minggu ${wk.split("-W")[1]}`;
+  const badgeColor = saving ? "amber" : count > 0 ? "blue" : "neutral";
+
+  return (
+    <CollapsiblePanel title="GURU BERTUGAS" sub="Tandakan guru bertugas minggu ini" badge={badge} badgeColor={badgeColor}>
+      <div style={{ paddingTop:14 }}>
+        {allTeachers && allTeachers.length > 0 ? (
+          <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+            {allTeachers.map((t, i) => {
+              const checked = selected.includes(t);
+              return (
+                <label key={i} style={{
+                  display:"flex", alignItems:"center", gap:10, padding:"9px 14px", borderRadius:8,
+                  border:`1.5px solid ${checked ? "var(--accent)" : "var(--border)"}`,
+                  background: checked ? "var(--accent-light)" : "var(--surface2)",
+                  cursor: disabled ? "default" : "pointer", transition:"all 0.13s",
+                }}>
+                  <input type="checkbox" checked={checked} disabled={disabled}
+                    onChange={() => handleToggle(t)}
+                    style={{ width:16, height:16, accentColor:"var(--accent)", cursor: disabled ? "default" : "pointer" }} />
+                  <span style={{ fontSize:13, fontWeight: checked ? 600 : 400, color: checked ? "var(--accent)" : "var(--text)" }}>{t}</span>
+                </label>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{ padding:"16px 0", display:"flex", alignItems:"center", gap:10, color:"var(--text3)", fontSize:13 }}>
+            <Spinner size={16} /> Memuatkan senarai guru...
+          </div>
+        )}
+        {count > 0 && (
+          <div style={{ marginTop:12, padding:"10px 14px", borderRadius:8, background:"var(--accent-light)", border:"1px solid var(--accent-mid)", fontSize:13, color:"var(--accent)", fontWeight:600 }}>
+            {count} guru bertugas minggu ini
+          </div>
+        )}
+      </div>
+    </CollapsiblePanel>
+  );
+}
+
+
+function FormField({ label, sub, children }) {
+  return (
+    <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)", padding:20, display:"flex", flexDirection:"column", gap:10 }}>
+      <div>
+        <div style={{ fontWeight:700, fontSize:14, letterSpacing:"0.04em" }}>{label}</div>
+        {sub && <div style={{ fontSize:12, color:"var(--text3)", marginTop:2 }}>{sub}</div>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function TA({ value, onChange, disabled, placeholder, rows=3 }) {
+  return (
+    <textarea value={value} onChange={e=>onChange(e.target.value)} disabled={disabled}
+      placeholder={placeholder} rows={rows}
+      style={{ width:"100%", padding:"10px 12px", border:"1px solid var(--border)", borderRadius:8, fontSize:13, color:"var(--text)", background:disabled?"var(--surface2)":"var(--surface)", resize:"vertical", outline:"none" }} />
+  );
+}
+
+/* ── Main report form ─────────────────────────────────────────────────── */
+function TodayReport({ report, teachers, dateStr, onSave, onSubmit, isSaving }) {
+  const [form, setForm] = useState(() => report ? { ...emptyReport(dateStr), ...report, ratings:{...(report.ratings||{})}, komen:{...(report.komen||{})}, images:{...(report.images||{})}, absentTeachers: report.absentTeachers || [] } : emptyReport(dateStr));
+  const [dirty, setDirty] = useState(false);
+  const saveTimer = useRef(null);
+  const disabled = form.submitted;
+
+  // Sync if report prop changes (e.g. realtime update from another device)
+  useEffect(() => {
+    if (report && !dirty) {
+      setForm({ ...emptyReport(dateStr), ...report, ratings:{...(report.ratings||{})}, komen:{...(report.komen||{})}, images:{...(report.images||{})}, absentTeachers: report.absentTeachers || [] });
+    }
+  }, [report]);
+
+  function upd(field, val) {
+    setForm(f => ({ ...f, [field]: val }));
+    setDirty(true);
+    scheduleSave({ ...form, [field]: val });
+  }
+  function updRating(id, val) {
+    const ratings = { ...form.ratings, [id]: val };
+    setForm(f => ({ ...f, ratings }));
+    setDirty(true);
+    scheduleSave({ ...form, ratings });
+  }
+  function updKomen(id, val) {
+    const komen = { ...form.komen, [id]: val };
+    setForm(f => ({ ...f, komen }));
+    setDirty(true);
+    scheduleSave({ ...form, komen });
+  }
+  function updImages(id, val) {
+    const images = { ...form.images, [id]: val };
+    setForm(f => ({ ...f, images }));
+    setDirty(true);
+    onSave({ ...form, images }); // save immediately after image change
+  }
+
+  function scheduleSave(latestForm) {
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => { onSave(latestForm); }, 900);
+  }
+
+  const weekNum = getWeekNumber(new Date(dateStr + "T00:00:00"));
+  const allRated = SECTIONS.every(s => form.ratings[s.id] !== null);
+
+  return (
+    <div style={{ maxWidth:720, margin:"0 auto", padding:"0 16px 60px" }}>
+
+      {/* Date header */}
+      <div style={{
+        background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)",
+        padding:"18px 20px", marginBottom:14,
+        display:"grid", gridTemplateColumns:"1fr auto", gap:12, alignItems:"center"
+      }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+          <div style={{ fontSize:10, fontWeight:700, color:"var(--text3)", letterSpacing:"0.08em" }}>{SCHOOL_CODE} / {SCHOOL_NAME}</div>
+          <div style={{ fontSize:16, fontWeight:800, letterSpacing:"-0.01em" }}>{formatDate(dateStr)}</div>
+          <div style={{ display:"flex", gap:8, marginTop:2 }}>
+            {form.submitted
+              ? <Badge color="green">✓ Dihantar</Badge>
+              : isSaving ? <Badge color="amber">Menyimpan…</Badge>
+              : <Badge color="neutral">Auto-simpan aktif</Badge>
+            }
+          </div>
+        </div>
+        <div style={{ textAlign:"center", background:"var(--accent-light)", border:"1.5px solid var(--accent-mid)", borderRadius:12, padding:"8px 18px" }}>
+          <div style={{ fontSize:9, fontWeight:700, color:"var(--accent)", letterSpacing:"0.08em" }}>MINGGU KE</div>
+          <div style={{ fontSize:30, fontWeight:800, color:"var(--accent)", lineHeight:1 }}>{weekNum}</div>
+        </div>
+      </div>
+
+      {/* Guru Bertugas — weekly collapsible */}
+      <div style={{ marginBottom:14 }}>
+        <WeeklyGuruPanel dateStr={dateStr} disabled={disabled} allTeachers={teachers} />
+      </div>
+
+      {/* Absent */}
+      <div style={{ marginBottom:14 }}>
+        <AbsentPanel teachers={teachers} absentList={form.absentTeachers || []} onChange={v => upd("absentTeachers",v)} disabled={disabled} />
+      </div>
+
+      {/* Perhimpunan */}
+      <div style={{ marginBottom:14 }}>
+        <FormField label="PERHIMPUNAN" sub="Aktiviti / Pengumuman pagi">
+          <TA value={form.perhimpunan} onChange={v=>upd("perhimpunan",v)} disabled={disabled} placeholder="Cth: 7.30 pagi – Perhimpunan pagi, Bacaan Amanat, Teguran Guru Bertugas..." rows={3} />
+        </FormField>
+      </div>
+
+      {/* Rating sections */}
+      {SECTIONS.map(s => (
+        <div key={s.id} style={{ marginBottom:14 }}>
+          <SectionCard
+            section={s}
+            value={form.ratings[s.id]}
+            komen={form.komen[s.id]}
+            images={(form.images||{})[s.id] || []}
+            onRating={v => updRating(s.id, v)}
+            onKomen={v => updKomen(s.id, v)}
+            onImages={v => updImages(s.id, v)}
+            dateStr={dateStr}
+            disabled={disabled}
+          />
+        </div>
+      ))}
+
+      {/* Aktiviti P&P */}
+      <div style={{ marginBottom:14 }}>
+        <FormField label="AKTIVITI PENGAJARAN DAN PEMBELAJARAN">
+          <TA value={form.aktiviti} onChange={v=>upd("aktiviti",v)} disabled={disabled} placeholder="Cth: PdPc berjalan dengan baik..." rows={3} />
+          <div>
+            <div style={{ fontSize:11, fontWeight:600, color:"var(--text3)", marginBottom:6 }}>GAMBAR</div>
+            <ImageSection sectionId="aktiviti" dateStr={dateStr} images={(form.images||{})["aktiviti"]||[]} onUpdate={v=>updImages("aktiviti",v)} disabled={disabled} />
+          </div>
+        </FormField>
+      </div>
+
+      {/* Pelawat */}
+      <div style={{ marginBottom:14 }}>
+        <FormField label="PELAWAT" sub="VIP daripada JPN, PPD, BTP dan Pegawai kementerian sahaja">
+          <TA value={form.pelawat} onChange={v=>upd("pelawat",v)} disabled={disabled} placeholder="Cth: Tiada / nama pelawat dan tujuan..." rows={2} />
+          <div>
+            <div style={{ fontSize:11, fontWeight:600, color:"var(--text3)", marginBottom:6 }}>GAMBAR</div>
+            <ImageSection sectionId="pelawat" dateStr={dateStr} images={(form.images||{})["pelawat"]||[]} onUpdate={v=>updImages("pelawat",v)} disabled={disabled} />
+          </div>
+        </FormField>
+      </div>
+
+      {/* Hal-hal Lain */}
+      <div style={{ marginBottom:14 }}>
+        <FormField label="HAL-HAL LAIN">
+          <TA value={form.halLain} onChange={v=>upd("halLain",v)} disabled={disabled} placeholder="Cth: Tiada / perkara penting lain..." rows={2} />
+          <div>
+            <div style={{ fontSize:11, fontWeight:600, color:"var(--text3)", marginBottom:6 }}>GAMBAR</div>
+            <ImageSection sectionId="halLain" dateStr={dateStr} images={(form.images||{})["halLain"]||[]} onUpdate={v=>updImages("halLain",v)} disabled={disabled} />
+          </div>
+        </FormField>
+      </div>
+
+      {/* Pelapor */}
+      <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)", padding:20, marginBottom:20, display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+        <div>
+          <div style={{ fontSize:11, fontWeight:700, color:"var(--text3)", marginBottom:8, letterSpacing:"0.04em" }}>PELAPOR</div>
+          {disabled
+            ? <div style={{ fontWeight:700, fontSize:13 }}>{form.pelapor||"—"}</div>
+            : <select value={form.pelapor} onChange={e=>upd("pelapor",e.target.value)} style={{ width:"100%", padding:"8px 10px", border:"1px solid var(--border)", borderRadius:8, fontSize:12, outline:"none", background:"var(--surface)", color:"var(--text)" }}>
+                <option value="">— Pilih Guru —</option>
+                {teachers.map(t=><option key={t} value={t}>{t}</option>)}
+              </select>
+          }
+        </div>
+        <div>
+          <div style={{ fontSize:11, fontWeight:700, color:"var(--text3)", marginBottom:8, letterSpacing:"0.04em" }}>DISEMAK OLEH</div>
+          {disabled
+            ? <div style={{ fontWeight:700, fontSize:13 }}>{form.disemakOleh||"—"}</div>
+            : <select value={form.disemakOleh} onChange={e=>upd("disemakOleh",e.target.value)} style={{ width:"100%", padding:"8px 10px", border:"1px solid var(--border)", borderRadius:8, fontSize:12, outline:"none", background:"var(--surface)", color:"var(--text)" }}>
+                <option value="">— Pilih Pentadbir —</option>
+                {PENTADBIR.map(p=><option key={p} value={p}>{p}</option>)}
+              </select>
+          }
+        </div>
+      </div>
+
+      {/* Submit */}
+      {!disabled && (
+        <button
+          onClick={() => { if(!allRated){ alert("Sila pilih penilaian untuk semua bahagian sebelum hantar."); return; } onSubmit(form); }}
+          style={{
+            width:"100%", padding:"15px", borderRadius:"var(--radius)", border:"none",
+            background: allRated ? "var(--accent)" : "var(--border2)",
+            color: allRated ? "#fff" : "var(--text3)",
+            fontSize:15, fontWeight:700, cursor: allRated ? "pointer" : "not-allowed",
+            transition:"all 0.15s",
+          }}>
+          {allRated ? "Hantar Laporan ✓" : `Hantar (${SECTIONS.filter(s=>form.ratings[s.id]).length}/${SECTIONS.length} dinilai)`}
+        </button>
+      )}
+      {disabled && (
+        <div style={{ textAlign:"center", padding:16, background:"var(--green-light)", border:"1px solid var(--green)", borderRadius:"var(--radius)", color:"var(--green)", fontWeight:700, fontSize:14 }}>
+          ✓ Laporan ini telah dihantar dan disimpan dalam Firebase
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── History list ─────────────────────────────────────────────────────── */
+function HistoryList({ reports, onOpen }) {
+  if (!reports.length) return (
+    <div style={{ textAlign:"center", padding:"40px 20px", color:"var(--text3)" }}>
+      <div style={{ fontSize:36, marginBottom:10 }}>📋</div>
+      <div style={{ fontWeight:600 }}>Tiada rekod laporan lama</div>
+    </div>
+  );
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+      {reports.map(r => {
+        const absentCount = r.absentTeachers?.length || 0;
+        const vals = Object.values(r.ratings||{}).filter(Boolean);
+        const majority = RATINGS.slice().reverse().find(rt => vals.includes(rt));
+        const c = majority ? RATING_COLORS[majority] : null;
+        return (
+          <div key={r.date} onClick={() => onOpen(r)}
+            style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)", padding:"16px 18px", cursor:"pointer", transition:"box-shadow 0.15s, border-color 0.15s" }}
+            onMouseEnter={e=>{ e.currentTarget.style.boxShadow="var(--shadow-lg)"; e.currentTarget.style.borderColor="var(--border2)"; }}
+            onMouseLeave={e=>{ e.currentTarget.style.boxShadow="none"; e.currentTarget.style.borderColor="var(--border)"; }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+              <div>
+                <div style={{ fontWeight:700, fontSize:14 }}>{formatDate(r.date)}</div>
+                <div style={{ fontSize:12, color:"var(--text3)", marginTop:2 }}>Minggu ke-{getWeekNumber(new Date(r.date+"T00:00:00"))}</div>
+              </div>
+              <div style={{ display:"flex", gap:6 }}>
+                {r.submitted ? <Badge color="green">Selesai</Badge> : <Badge color="neutral">Draf</Badge>}
+              </div>
+            </div>
+            <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginTop:10 }}>
+              {c && <span style={{ padding:"2px 10px", borderRadius:99, fontSize:11, fontWeight:600, background:c.bg, border:`1px solid ${c.border}`, color:c.text }}>{majority}</span>}
+              {absentCount > 0 && <Badge color="red">{absentCount} tidak hadir</Badge>}
+              {r.pelapor && <span style={{ fontSize:11, color:"var(--text3)" }}>— {r.pelapor.split(" ").slice(0,3).join(" ")}</span>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── Settings panel ───────────────────────────────────────────────────── */
+function SettingsPanel({ teachers, onSave, onClose }) {
+  const [list, setList] = useState([...teachers]);
+  const [newName, setNewName] = useState("");
+  function add() { const n=newName.trim().toUpperCase(); if(n&&!list.includes(n)){setList(l=>[...l,n]);setNewName("");} }
+  function remove(i) { setList(l=>l.filter((_,j)=>j!==i)); }
+  function edit(i,val) { setList(l=>l.map((t,j)=>j===i?val.toUpperCase():t)); }
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.45)", zIndex:500, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
+      <div style={{ background:"var(--surface)", borderRadius:"20px 20px 0 0", width:"100%", maxWidth:720, maxHeight:"85vh", overflow:"auto", padding:24 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+          <div style={{ fontWeight:800, fontSize:18 }}>Senarai Guru Bertugas</div>
+          <button onClick={onClose} style={{ width:32, height:32, borderRadius:8, border:"1px solid var(--border)", background:"transparent", cursor:"pointer", fontSize:18 }}>×</button>
+        </div>
+        {list.map((t,i) => (
+          <div key={i} style={{ display:"flex", gap:8, marginBottom:8 }}>
+            <input value={t} onChange={e=>edit(i,e.target.value)} style={{ flex:1, padding:"8px 12px", border:"1px solid var(--border)", borderRadius:8, fontSize:13, outline:"none" }} />
+            <button onClick={()=>remove(i)} style={{ width:34, height:34, border:"1px solid var(--border)", borderRadius:8, background:"var(--red-light)", color:"var(--red)", cursor:"pointer", fontSize:16, fontWeight:700 }}>×</button>
+          </div>
+        ))}
+        <div style={{ display:"flex", gap:8, marginTop:12 }}>
+          <input value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>e.key==="Enter"&&add()} placeholder="Tambah nama guru baru..." style={{ flex:1, padding:"8px 12px", border:"1px solid var(--border)", borderRadius:8, fontSize:13, outline:"none" }} />
+          <button onClick={add} style={{ padding:"8px 18px", borderRadius:8, border:"none", background:"var(--accent)", color:"#fff", fontWeight:600, cursor:"pointer" }}>Tambah</button>
+        </div>
+        <button onClick={()=>onSave(list)} style={{ width:"100%", marginTop:20, padding:13, border:"none", borderRadius:10, background:"var(--accent)", color:"#fff", fontSize:15, fontWeight:700, cursor:"pointer" }}>Simpan</button>
+      </div>
+    </div>
+  );
+}
+
+/* ── View past report (read-only) ─────────────────────────────────────── */
+function PastReportView({ report, teachers, onBack }) {
+  const [form] = useState({ ...report, ratings:{...report.ratings}, komen:{...report.komen}, images:{...(report.images||{})} });
+  const dateStr = form.date;
+  const weekNum = getWeekNumber(new Date(dateStr+"T00:00:00"));
+  return (
+    <div style={{ maxWidth:720, margin:"0 auto", padding:"0 16px 60px" }}>
+      <div style={{ position:"sticky", top:0, zIndex:100, background:"var(--bg)", padding:"16px 0 12px", borderBottom:"1px solid var(--border)", marginBottom:20 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <button onClick={onBack} style={{ width:36, height:36, borderRadius:8, border:"1px solid var(--border)", background:"var(--surface)", cursor:"pointer", fontSize:18, color:"var(--text2)", display:"flex", alignItems:"center", justifyContent:"center" }}>←</button>
+          <div style={{ flex:1 }}>
+            <div style={{ fontWeight:700, fontSize:15 }}>Laporan Lama</div>
+            <div style={{ fontSize:12, color:"var(--text3)" }}>{formatDate(dateStr)}</div>
+          </div>
+          {form.submitted ? <Badge color="green">Selesai</Badge> : <Badge color="neutral">Draf</Badge>}
+        </div>
+      </div>
+      <TodayReport report={form} teachers={teachers} dateStr={dateStr} onSave={()=>{}} onSubmit={()=>{}} isSaving={false} />
+    </div>
+  );
+}
+
+/* ── Admin Login ──────────────────────────────────────────────────────── */
+function AdminLogin({ onLogin }) {
+  const [step, setStep] = useState("password"); // "password" | "choose"
+  const [pw, setPw] = useState("");
+  const [error, setError] = useState("");
+  const [chosen, setChosen] = useState("");
+
+  function submitPw(e) {
+    e.preventDefault();
+    if (pw === "admin123") { setStep("choose"); setError(""); }
+    else { setError("Kata laluan salah. Cuba semula."); }
+  }
+
+  function submitAdmin() {
+    if (!chosen) return;
+    sessionStorage.setItem("lgb_admin", chosen);
+    onLogin(chosen);
+  }
+
+  return (
+    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"var(--bg)", padding:24 }}>
+      <div style={{ width:"100%", maxWidth:400 }}>
+        <div style={{ textAlign:"center", marginBottom:32 }}>
+          <div style={{ width:56, height:56, borderRadius:16, background:"var(--accent)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px", fontSize:24 }}>🔐</div>
+          <div style={{ fontWeight:800, fontSize:20, letterSpacing:"-0.01em" }}>Portal Admin</div>
+          <div style={{ fontSize:13, color:"var(--text3)", marginTop:4 }}>{SCHOOL_NAME} · {SCHOOL_CODE}</div>
+        </div>
+
+        <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)", padding:28 }}>
+          {step === "password" ? (
+            <form onSubmit={submitPw} style={{ display:"flex", flexDirection:"column", gap:16 }}>
+              <div>
+                <div style={{ fontSize:12, fontWeight:700, color:"var(--text3)", marginBottom:8, letterSpacing:"0.04em" }}>KATA LALUAN ADMIN</div>
+                <input type="password" value={pw} onChange={e => { setPw(e.target.value); setError(""); }}
+                  placeholder="Masukkan kata laluan..."
+                  style={{ width:"100%", padding:"11px 14px", border:`1.5px solid ${error ? "var(--red)" : "var(--border)"}`, borderRadius:10, fontSize:14, outline:"none", fontFamily:"inherit" }} />
+                {error && <div style={{ fontSize:12, color:"var(--red)", marginTop:6, fontWeight:600 }}>{error}</div>}
+              </div>
+              <button type="submit" style={{ padding:"12px", borderRadius:10, border:"none", background:"var(--accent)", color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer" }}>
+                Seterusnya →
+              </button>
+            </form>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:"var(--text3)", letterSpacing:"0.04em" }}>PILIH NAMA PENTADBIR</div>
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {PENTADBIR.map(p => (
+                  <button key={p} onClick={() => setChosen(p)} style={{
+                    padding:"12px 16px", borderRadius:10, textAlign:"left",
+                    border:`1.5px solid ${chosen === p ? "var(--accent)" : "var(--border)"}`,
+                    background: chosen === p ? "var(--accent-light)" : "var(--surface2)",
+                    color: chosen === p ? "var(--accent)" : "var(--text)",
+                    fontSize:13, fontWeight: chosen === p ? 700 : 500,
+                    cursor:"pointer", transition:"all 0.13s",
+                  }}>{p}</button>
+                ))}
+              </div>
+              <button onClick={submitAdmin} disabled={!chosen} style={{
+                padding:"12px", borderRadius:10, border:"none",
+                background: chosen ? "var(--accent)" : "var(--border2)",
+                color: chosen ? "#fff" : "var(--text3)",
+                fontSize:14, fontWeight:700, cursor: chosen ? "pointer" : "not-allowed",
+              }}>Masuk sebagai Pentadbir ✓</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Admin Report Card ────────────────────────────────────────────────── */
+function AdminReportCard({ report, onVerify, onView }) {
+  const absentCount = report.absentTeachers?.length || 0;
+  const vals = Object.values(report.ratings||{}).filter(Boolean);
+  const majority = RATINGS.slice().reverse().find(rt => vals.includes(rt));
+  const c = majority ? RATING_COLORS[majority] : null;
+  const allRated = SECTIONS.every(s => report.ratings?.[s.id]);
+
+  return (
+    <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)", overflow:"hidden" }}>
+      <div style={{ padding:"16px 18px" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8 }}>
+          <div>
+            <div style={{ fontWeight:700, fontSize:14 }}>{formatDate(report.date)}</div>
+            <div style={{ fontSize:12, color:"var(--text3)", marginTop:2 }}>Minggu ke-{getWeekNumber(new Date(report.date+"T00:00:00"))} · Pelapor: {report.pelapor || "—"}</div>
+          </div>
+          <div style={{ display:"flex", gap:6, flexShrink:0 }}>
+            {report.submitted ? <Badge color="green">Dihantar</Badge> : <Badge color="neutral">Draf</Badge>}
+          </div>
+        </div>
+        <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginTop:10 }}>
+          {c && <span style={{ padding:"2px 10px", borderRadius:99, fontSize:11, fontWeight:600, background:c.bg, border:`1px solid ${c.border}`, color:c.text }}>{majority}</span>}
+          {absentCount > 0 && <Badge color="red">{absentCount} tidak hadir</Badge>}
+          {!allRated && <Badge color="amber">Belum lengkap</Badge>}
+        </div>
+      </div>
+      <div style={{ padding:"12px 18px", borderTop:"1px solid var(--border)", background:"var(--surface2)", display:"flex", gap:8 }}>
+        <button onClick={() => onView(report)} style={{ flex:1, padding:"8px", borderRadius:8, border:"1px solid var(--border)", background:"var(--surface)", fontSize:12, fontWeight:600, cursor:"pointer", color:"var(--text2)" }}>
+          Lihat Laporan
+        </button>
+        <button onClick={() => onVerify(report)} style={{ flex:2, padding:"8px", borderRadius:8, border:"none", background:"var(--accent)", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer" }}>
+          ✓ Sahkan Laporan
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Admin Dashboard ──────────────────────────────────────────────────── */
+function AdminDashboard({ pentadbir, onLogout, teachers }) {
+  const [tab, setTab] = useState("pending"); // "pending" | "verified"
+  const [allReports, setAllReports] = useState([]);
+  const [viewReport, setViewReport] = useState(null);
+  const [verifyTarget, setVerifyTarget] = useState(null); // { type:"day"|"week", report, weekDates }
+  const [toast, setToast] = useState(null);
+  const [filterDate, setFilterDate] = useState("");
+  const [filterWeek, setFilterWeek] = useState("");
+
+  function showToast(msg, type="success") {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 2800);
+  }
+
+  useEffect(() => {
+    let unsub;
+    fbListenAllDates(reports => setAllReports(reports)).then(u => { unsub = u; });
+    return () => { if (unsub) unsub(); };
+  }, []);
+
+  const pending  = allReports.filter(r => r.submitted && !r.verified);
+  const verified = allReports.filter(r => r.verified);
+
+  // Group pending by week
+  const pendingByWeek = {};
+  pending.forEach(r => {
+    const wk = weekKey(r.date);
+    if (!pendingByWeek[wk]) pendingByWeek[wk] = [];
+    pendingByWeek[wk].push(r);
+  });
+
+  async function handleVerifyDay(report) {
+    try {
+      await fbVerifyReport(report.date, pentadbir);
+      showToast(`Laporan ${formatDate(report.date)} disahkan ✓`);
+    } catch(e) { showToast("Gagal sahkan.", "error"); }
+  }
+
+  async function handleVerifyWeek(weekDates) {
+    try {
+      await fbVerifyWeek(null, null, pentadbir, weekDates);
+      showToast(`${weekDates.length} laporan minggu disahkan ✓`);
+    } catch(e) { showToast("Gagal sahkan.", "error"); }
+  }
+
+  // Filter verified reports
+  let filteredVerified = verified;
+  if (filterDate) filteredVerified = verified.filter(r => r.date === filterDate);
+  if (filterWeek) filteredVerified = verified.filter(r => weekKey(r.date) === filterWeek);
+
+  if (viewReport) {
+    return (
+      <>
+        {toast && <Toast {...toast} />}
+        <div style={{ maxWidth:720, margin:"0 auto", padding:"0 16px 60px" }}>
+          <div style={{ position:"sticky", top:0, zIndex:100, background:"var(--bg)", padding:"16px 0 12px", borderBottom:"1px solid var(--border)", marginBottom:20 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+              <button onClick={() => setViewReport(null)} style={{ width:36, height:36, borderRadius:8, border:"1px solid var(--border)", background:"var(--surface)", cursor:"pointer", fontSize:18, display:"flex", alignItems:"center", justifyContent:"center" }}>←</button>
+              <div style={{ flex:1 }}>
+                <div style={{ fontWeight:700, fontSize:15 }}>Semakan Laporan</div>
+                <div style={{ fontSize:12, color:"var(--text3)" }}>{formatDate(viewReport.date)}</div>
+              </div>
+              {viewReport.verified
+                ? <Badge color="green">✓ Disahkan oleh {viewReport.verifiedBy?.split(" ")[0]}</Badge>
+                : <Badge color="neutral">Belum disahkan</Badge>
+              }
+            </div>
+          </div>
+          <TodayReport report={viewReport} teachers={teachers} dateStr={viewReport.date} onSave={()=>{}} onSubmit={()=>{}} isSaving={false} />
+          {!viewReport.verified && (
+            <div style={{ position:"sticky", bottom:16, padding:"0 0 8px" }}>
+              <button onClick={async () => { await handleVerifyDay(viewReport); setViewReport(null); }} style={{ width:"100%", padding:"14px", borderRadius:"var(--radius)", border:"none", background:"var(--green)", color:"#fff", fontSize:15, fontWeight:700, cursor:"pointer" }}>
+                ✓ Sahkan Laporan Ini
+              </button>
+            </div>
+          )}
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column" }}>
+      {toast && <Toast {...toast} />}
+
+      {/* Header */}
+      <div style={{ background:"var(--surface)", borderBottom:"1px solid var(--border)", padding:"0 16px", position:"sticky", top:0, zIndex:200 }}>
+        <div style={{ maxWidth:720, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", height:56 }}>
+          <div>
+            <div style={{ fontWeight:800, fontSize:14, letterSpacing:"-0.01em" }}>Portal Admin</div>
+            <div style={{ fontSize:10, color:"var(--text3)", fontWeight:600 }}>{pentadbir.split("(")[0].trim()}</div>
+          </div>
+          <button onClick={onLogout} style={{ padding:"6px 12px", borderRadius:7, border:"1px solid var(--border)", background:"var(--surface2)", cursor:"pointer", fontSize:12, fontWeight:600, color:"var(--text2)" }}>Log Keluar</button>
+        </div>
+        <div style={{ maxWidth:720, margin:"0 auto", display:"flex", borderTop:"1px solid var(--border)" }}>
+          {[["pending",`Perlu Disahkan (${pending.length})`],["verified","Laporan Disahkan"]].map(([key,label]) => (
+            <button key={key} onClick={()=>setTab(key)} style={{
+              flex:1, padding:"10px 0", border:"none", background:"transparent",
+              fontFamily:"inherit", fontSize:12, fontWeight:700, cursor:"pointer",
+              color: tab===key ? "var(--accent)" : "var(--text3)",
+              borderBottom: tab===key ? "2.5px solid var(--accent)" : "2.5px solid transparent",
+              transition:"all 0.13s",
+            }}>{label}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ flex:1, padding:"20px 16px 40px", maxWidth:720, margin:"0 auto", width:"100%" }}>
+        {tab === "pending" && (
+          <>
+            {pending.length === 0 ? (
+              <div style={{ textAlign:"center", padding:"48px 20px", color:"var(--text3)" }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>✅</div>
+                <div style={{ fontWeight:700, fontSize:15 }}>Tiada laporan menunggu pengesahan</div>
+                <div style={{ fontSize:13, marginTop:4 }}>Semua laporan telah disahkan</div>
+              </div>
+            ) : (
+              Object.entries(pendingByWeek).sort((a,b) => b[0].localeCompare(a[0])).map(([wk, reports]) => {
+                const weekNum = wk.split("-W")[1];
+                const year = wk.split("-W")[0];
+                return (
+                  <div key={wk} style={{ marginBottom:24 }}>
+                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+                      <div style={{ fontSize:12, fontWeight:700, color:"var(--text3)", letterSpacing:"0.06em" }}>
+                        MINGGU KE-{weekNum} · {year} ({reports.length} laporan)
+                      </div>
+                      <button onClick={() => handleVerifyWeek(reports.map(r=>r.date))} style={{
+                        padding:"5px 12px", borderRadius:7, border:"none",
+                        background:"var(--accent)", color:"#fff", fontSize:11, fontWeight:700, cursor:"pointer",
+                      }}>✓ Sahkan Seminggu</button>
+                    </div>
+                    <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                      {reports.map(r => (
+                        <AdminReportCard key={r.date} report={r}
+                          onVerify={r => handleVerifyDay(r)}
+                          onView={r => setViewReport(r)} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </>
+        )}
+
+        {tab === "verified" && (
+          <>
+            {/* Filter */}
+            <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)", padding:16, marginBottom:16, display:"flex", flexDirection:"column", gap:10 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:"var(--text3)", letterSpacing:"0.04em" }}>CARI LAPORAN</div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+                <div>
+                  <div style={{ fontSize:11, color:"var(--text3)", marginBottom:4 }}>Ikut Tarikh</div>
+                  <input type="date" value={filterDate} onChange={e => { setFilterDate(e.target.value); setFilterWeek(""); }}
+                    style={{ width:"100%", padding:"8px 10px", border:"1px solid var(--border)", borderRadius:8, fontSize:12, fontFamily:"inherit", outline:"none" }} />
+                </div>
+                <div>
+                  <div style={{ fontSize:11, color:"var(--text3)", marginBottom:4 }}>Ikut Minggu</div>
+                  <select value={filterWeek} onChange={e => { setFilterWeek(e.target.value); setFilterDate(""); }}
+                    style={{ width:"100%", padding:"8px 10px", border:"1px solid var(--border)", borderRadius:8, fontSize:12, fontFamily:"inherit", outline:"none", background:"var(--surface)" }}>
+                    <option value="">— Semua Minggu —</option>
+                    {[...new Set(verified.map(r => weekKey(r.date)))].sort().reverse().map(wk => (
+                      <option key={wk} value={wk}>Minggu {wk.split("-W")[1]} · {wk.split("-W")[0]}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {(filterDate || filterWeek) && (
+                <button onClick={() => { setFilterDate(""); setFilterWeek(""); }} style={{ alignSelf:"flex-start", padding:"5px 12px", borderRadius:7, border:"1px solid var(--border)", background:"var(--surface2)", fontSize:11, fontWeight:600, cursor:"pointer", color:"var(--text2)" }}>× Kosongkan Penapis</button>
+              )}
+            </div>
+
+            {filteredVerified.length === 0 ? (
+              <div style={{ textAlign:"center", padding:"40px 20px", color:"var(--text3)" }}>
+                <div style={{ fontSize:36, marginBottom:10 }}>📋</div>
+                <div style={{ fontWeight:600 }}>Tiada laporan disahkan {filterDate || filterWeek ? "untuk pilihan ini" : ""}</div>
+              </div>
+            ) : (
+              <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"var(--text3)", letterSpacing:"0.06em", marginBottom:2 }}>
+                  {filteredVerified.length} LAPORAN DISAHKAN
+                </div>
+                {filteredVerified.sort((a,b) => b.date.localeCompare(a.date)).map(r => (
+                  <div key={r.date}
+                    onClick={() => setViewReport(r)}
+                    style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)", padding:"16px 18px", cursor:"pointer", transition:"box-shadow 0.15s" }}
+                    onMouseEnter={e => e.currentTarget.style.boxShadow="var(--shadow-lg)"}
+                    onMouseLeave={e => e.currentTarget.style.boxShadow="none"}>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+                      <div>
+                        <div style={{ fontWeight:700, fontSize:14 }}>{formatDate(r.date)}</div>
+                        <div style={{ fontSize:12, color:"var(--text3)", marginTop:2 }}>Disahkan oleh: {r.verifiedBy}</div>
+                      </div>
+                      <Badge color="green">✓ Disahkan</Badge>
+                    </div>
+                    <div style={{ fontSize:11, color:"var(--text3)", marginTop:8 }}>
+                      {r.pelapor && `Pelapor: ${r.pelapor}`}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Root App ─────────────────────────────────────────────────────────── */
+function App() {
+  const today = todayStr();
+  const [mode, setMode]         = useState("teacher"); // "teacher" | "admin-login" | "admin"
+  const [adminUser, setAdminUser] = useState(() => sessionStorage.getItem("lgb_admin") || null);
+  const [fbReady, setFbReady]   = useState(false);
+  const [loading, setLoading]   = useState(true);
+  const [teachers, setTeachers] = useState([]);
+  const [loadingTeachers, setLoadingTeachers] = useState(true);
+  const [todayReport, setTodayReport] = useState(null);
+  const [allReports, setAllReports]   = useState([]);
+  const [tab, setTab]           = useState("today");
+  const [viewReport, setViewReport]   = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [toast, setToast]       = useState(null);
+  const unsubToday = useRef(null);
+  const unsubAll   = useRef(null);
+
+  useEffect(() => {
+    if (adminUser) setMode("admin");
+  }, []);
+
+  function showToast(msg, type="success") {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 2800);
+  }
+
+  useEffect(() => {
+    waitForFirebase().then(() => {
+      setFbReady(true);
+      fbFetchAllGuru().then(list => {
+        if (list.length > 0) setTeachers(list);
+        setLoadingTeachers(false);
+      });
+      fbListenReport(today, data => {
+        setTodayReport(data);
+        setLoading(false);
+      }).then(unsub => { unsubToday.current = unsub; });
+      fbListenAllDates(all => {
+        setAllReports(all.filter(r => r.date !== today));
+      }).then(unsub => { unsubAll.current = unsub; });
+    });
+    return () => {
+      if (unsubToday.current) unsubToday.current();
+      if (unsubAll.current)   unsubAll.current();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!fbReady || loading) return;
+    if (todayReport === null) {
+      fbSaveReport(emptyReport(today)).catch(console.error);
+    }
+  }, [fbReady, loading, todayReport]);
+
+  async function handleSave(form) {
+    setIsSaving(true);
+    try { await fbSaveReport(form); }
+    catch(e) { showToast("Gagal simpan. Semak sambungan.", "error"); }
+    finally { setIsSaving(false); }
+  }
+
+  async function handleSubmit(form) {
+    setIsSaving(true);
+    try {
+      await fbSaveReport({ ...form, submitted: true });
+      showToast("Laporan berjaya dihantar! ✓");
+    } catch(e) { showToast("Gagal hantar.", "error"); }
+    finally { setIsSaving(false); }
+  }
+
+  if (mode === "admin-login") {
+    return <AdminLogin onLogin={user => { setAdminUser(user); setMode("admin"); }} />;
+  }
+  if (mode === "admin") {
+    return <AdminDashboard pentadbir={adminUser} teachers={teachers}
+      onLogout={() => { sessionStorage.removeItem("lgb_admin"); setAdminUser(null); setMode("teacher"); }} />;
+  }
+
+  if (viewReport) {
+    return (
+      <>
+        {toast && <Toast {...toast} />}
+        <PastReportView report={viewReport} teachers={teachers} onBack={() => setViewReport(null)} />
+      </>
+    );
+  }
+
+  return (
+    <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column" }}>
+      {toast && <Toast {...toast} />}
+      <div style={{ background:"var(--surface)", borderBottom:"1px solid var(--border)", padding:"0 16px", position:"sticky", top:0, zIndex:200 }}>
+        <div style={{ maxWidth:720, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", height:56 }}>
+          <div>
+            <div style={{ fontWeight:800, fontSize:15, letterSpacing:"-0.01em" }}>Guru Bertugas</div>
+            <div style={{ fontSize:10, color:"var(--text3)", fontWeight:600, letterSpacing:"0.06em" }}>{SCHOOL_CODE} / {SCHOOL_NAME}</div>
+          </div>
+          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+            {(!fbReady || loadingTeachers) && <Spinner size={16} />}
+            {fbReady && !loadingTeachers && <Badge color="green">{teachers.length} guru</Badge>}
+            <button onClick={() => setMode("admin-login")} style={{ padding:"6px 12px", borderRadius:7, border:"1px solid var(--border)", background:"var(--surface2)", cursor:"pointer", fontSize:12, fontWeight:600, color:"var(--text2)" }}>🔐 Admin</button>
+          </div>
+        </div>
+        <div style={{ maxWidth:720, margin:"0 auto", display:"flex", borderTop:"1px solid var(--border)" }}>
+          {[["today","Hari Ini"],["history","Rekod Lama"]].map(([key,label]) => (
+            <button key={key} onClick={()=>setTab(key)} style={{
+              flex:1, padding:"10px 0", border:"none", background:"transparent",
+              fontFamily:"inherit", fontSize:13, fontWeight:700, cursor:"pointer",
+              color: tab===key ? "var(--accent)" : "var(--text3)",
+              borderBottom: tab===key ? "2.5px solid var(--accent)" : "2.5px solid transparent",
+              transition:"all 0.13s",
+            }}>{label}</button>
+          ))}
+        </div>
+      </div>
+      <div style={{ flex:1, paddingTop:20 }}>
+        {tab === "today" && (
+          loading ? (
+            <div style={{ maxWidth:720, margin:"0 auto", padding:"0 16px" }}>
+              {[120,180,200,160].map((h,i) => <div key={i} className="skeleton" style={{ height:h, marginBottom:14, borderRadius:14 }} />)}
+            </div>
+          ) : (
+            <TodayReport key={today} report={todayReport} teachers={teachers} dateStr={today} onSave={handleSave} onSubmit={handleSubmit} isSaving={isSaving} />
+          )
+        )}
+        {tab === "history" && (
+          <div style={{ maxWidth:720, margin:"0 auto", padding:"0 16px" }}>
+            <div style={{ fontSize:11, fontWeight:700, color:"var(--text3)", letterSpacing:"0.06em", marginBottom:12 }}>REKOD LAPORAN LAMA</div>
+            <HistoryList reports={allReports} onOpen={r => setViewReport(r)} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
