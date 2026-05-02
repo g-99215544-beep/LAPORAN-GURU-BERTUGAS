@@ -162,6 +162,16 @@ function formatDate(dateStr) {
   return `${day} ${months[d.getMonth()]} ${d.getFullYear()} (${DAYS_MS[d.getDay()]})`;
 }
 
+function isBeforeToday(dateStr) {
+  return dateStr < todayStr();
+}
+
+function yesterdayStr() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
 function emptyReport(date) {
   const ratings = {}; const komen = {}; const images = {};
   SECTIONS.forEach(s => { ratings[s.id] = null; komen[s.id] = ""; images[s.id] = []; });
@@ -626,7 +636,8 @@ function TodayReport({ report, teachers, dateStr, onSave, onSubmit, isSaving }) 
   const [form, setForm] = useState(() => report ? { ...emptyReport(dateStr), ...report, ratings:{...(report.ratings||{})}, komen:{...(report.komen||{})}, images:{...(report.images||{})}, absentTeachers: report.absentTeachers || [] } : emptyReport(dateStr));
   const [dirty, setDirty] = useState(false);
   const saveTimer = useRef(null);
-  const disabled = form.submitted;
+  const canEditSubmittedToday = form.submitted && dateStr === todayStr();
+  const disabled = form.submitted && !canEditSubmittedToday;
 
   // Sync if report prop changes (e.g. realtime update from another device)
   useEffect(() => {
@@ -785,7 +796,7 @@ function TodayReport({ report, teachers, dateStr, onSave, onSubmit, isSaving }) 
       </div>
 
       {/* Submit */}
-      {!disabled && (
+      {!form.submitted && (
         <button
           onClick={() => { if(!allRated){ alert("Sila pilih penilaian untuk semua bahagian sebelum hantar."); return; } onSubmit(form); }}
           style={{
@@ -798,7 +809,12 @@ function TodayReport({ report, teachers, dateStr, onSave, onSubmit, isSaving }) 
           {allRated ? "Hantar Laporan ✓" : `Hantar (${SECTIONS.filter(s=>form.ratings[s.id]).length}/${SECTIONS.length} dinilai)`}
         </button>
       )}
-      {disabled && (
+      {canEditSubmittedToday && (
+        <div style={{ textAlign:"center", padding:16, background:"var(--green-light)", border:"1px solid var(--green)", borderRadius:"var(--radius)", color:"var(--green)", fontWeight:700, fontSize:14 }}>
+          Laporan telah dihantar. Guru masih boleh edit sehingga hari ini tamat; perubahan akan auto-simpan.
+        </div>
+      )}
+      {form.submitted && !canEditSubmittedToday && (
         <div style={{ textAlign:"center", padding:16, background:"var(--green-light)", border:"1px solid var(--green)", borderRadius:"var(--radius)", color:"var(--green)", fontWeight:700, fontSize:14 }}>
           ✓ Laporan ini telah dihantar dan disimpan dalam Firebase
         </div>
@@ -808,7 +824,7 @@ function TodayReport({ report, teachers, dateStr, onSave, onSubmit, isSaving }) 
 }
 
 /* ── History list ─────────────────────────────────────────────────────── */
-function HistoryList({ reports, onOpen }) {
+function LegacyHistoryList({ reports, onOpen }) {
   if (!reports.length) return (
     <div style={{ textAlign:"center", padding:"40px 20px", color:"var(--text3)" }}>
       <div style={{ fontSize:36, marginBottom:10 }}>📋</div>
@@ -849,6 +865,185 @@ function HistoryList({ reports, onOpen }) {
 }
 
 /* ── Settings panel ───────────────────────────────────────────────────── */
+function ReadOnlyValue({ children, empty="-" }) {
+  const hasValue = children !== undefined && children !== null && String(children).trim() !== "";
+  return (
+    <div style={{
+      background:"var(--surface2)", border:"1px solid var(--border)", borderRadius:8,
+      padding:"10px 12px", fontSize:13, lineHeight:1.6, color:hasValue ? "var(--text)" : "var(--text3)",
+      whiteSpace:"pre-wrap", minHeight:42,
+    }}>
+      {hasValue ? children : empty}
+    </div>
+  );
+}
+
+function WeeklyGuruReadOnly({ dateStr }) {
+  const [selected, setSelected] = useState(null);
+  useEffect(() => {
+    let unsub;
+    fbListenWeeklyTeachers(dateStr, teachers => {
+      setSelected(teachers && teachers.length > 0 ? teachers : []);
+    }).then(u => { unsub = u; });
+    return () => { if (unsub) unsub(); };
+  }, [dateStr]);
+
+  return (
+    <FormField label="GURU BERTUGAS" sub={`Minggu ke-${weekKey(dateStr).split("-W")[1]}`}>
+      {selected === null ? (
+        <div style={{ display:"flex", alignItems:"center", gap:10, color:"var(--text3)", fontSize:13 }}>
+          <Spinner size={16} /> Memuatkan senarai guru...
+        </div>
+      ) : selected.length > 0 ? (
+        <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+          {selected.map(name => <Badge key={name} color="blue">{name}</Badge>)}
+        </div>
+      ) : (
+        <ReadOnlyValue>Tiada guru bertugas direkodkan</ReadOnlyValue>
+      )}
+    </FormField>
+  );
+}
+
+function ReadOnlySection({ title, sub, rating, text, images, sectionId, dateStr, showImages=true }) {
+  return (
+    <FormField label={title} sub={sub}>
+      {rating !== undefined && (
+        <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+          <div style={{ fontSize:11, fontWeight:700, color:"var(--text3)", letterSpacing:"0.04em" }}>PENILAIAN</div>
+          {rating
+            ? <Badge color={rating === "Lemah" ? "red" : rating === "Memuaskan" ? "amber" : rating === "Baik" ? "green" : "blue"}>{rating}</Badge>
+            : <Badge color="neutral">Tiada penilaian</Badge>}
+        </div>
+      )}
+      {text !== undefined && (
+        <div>
+          <div style={{ fontSize:11, fontWeight:700, color:"var(--text3)", marginBottom:6, letterSpacing:"0.04em" }}>CATATAN</div>
+          <ReadOnlyValue>{text}</ReadOnlyValue>
+        </div>
+      )}
+      {showImages && (
+        <div>
+          <div style={{ fontSize:11, fontWeight:700, color:"var(--text3)", marginBottom:6, letterSpacing:"0.04em" }}>GAMBAR</div>
+          {(images || []).length > 0
+            ? <ImageSection sectionId={sectionId} dateStr={dateStr} images={images || []} onUpdate={()=>{}} disabled={true} />
+            : <ReadOnlyValue>Tiada gambar</ReadOnlyValue>}
+        </div>
+      )}
+    </FormField>
+  );
+}
+
+function ReportReadOnlyBody({ report, teachers }) {
+  const dateStr = report.date;
+  const form = { ...emptyReport(dateStr), ...report, ratings:{...(report.ratings||{})}, komen:{...(report.komen||{})}, images:{...(report.images||{})}, absentTeachers: report.absentTeachers || [] };
+  const weekNum = getWeekNumber(new Date(dateStr + "T00:00:00"));
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+      <div style={{
+        background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)",
+        padding:"18px 20px", display:"grid", gridTemplateColumns:"1fr auto", gap:12, alignItems:"center"
+      }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+          <div style={{ fontSize:10, fontWeight:700, color:"var(--text3)", letterSpacing:"0.08em" }}>{SCHOOL_CODE} / {SCHOOL_NAME}</div>
+          <div style={{ fontSize:16, fontWeight:800, letterSpacing:"-0.01em" }}>{formatDate(dateStr)}</div>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+            {form.submitted ? <Badge color="green">Dihantar</Badge> : <Badge color="neutral">Draf</Badge>}
+            {form.verified ? <Badge color="blue">Disahkan</Badge> : <Badge color="amber">Belum disahkan</Badge>}
+          </div>
+        </div>
+        <div style={{ textAlign:"center", background:"var(--accent-light)", border:"1.5px solid var(--accent-mid)", borderRadius:12, padding:"8px 18px" }}>
+          <div style={{ fontSize:9, fontWeight:700, color:"var(--accent)", letterSpacing:"0.08em" }}>MINGGU KE</div>
+          <div style={{ fontSize:30, fontWeight:800, color:"var(--accent)", lineHeight:1 }}>{weekNum}</div>
+        </div>
+      </div>
+
+      <WeeklyGuruReadOnly dateStr={dateStr} />
+
+      <FormField label="GURU TIDAK HADIR">
+        {(form.absentTeachers || []).length > 0 ? (
+          <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+            {form.absentTeachers.map(name => <Badge key={name} color="red">{name}</Badge>)}
+          </div>
+        ) : (
+          <ReadOnlyValue>Semua hadir</ReadOnlyValue>
+        )}
+      </FormField>
+
+      <ReadOnlySection title="PERHIMPUNAN" sub="Aktiviti / Pengumuman pagi" text={form.perhimpunan} sectionId="perhimpunan" dateStr={dateStr} showImages={false} />
+
+      {SECTIONS.map(s => (
+        <ReadOnlySection
+          key={s.id}
+          title={s.label}
+          sub={s.sub}
+          rating={form.ratings[s.id]}
+          text={form.komen[s.id]}
+          images={(form.images || {})[s.id] || []}
+          sectionId={s.id}
+          dateStr={dateStr}
+        />
+      ))}
+
+      <ReadOnlySection title="AKTIVITI PENGAJARAN DAN PEMBELAJARAN" text={form.aktiviti} images={(form.images || {})["aktiviti"] || []} sectionId="aktiviti" dateStr={dateStr} />
+      <ReadOnlySection title="PELAWAT" sub="VIP daripada JPN, PPD, BTP dan Pegawai kementerian sahaja" text={form.pelawat} images={(form.images || {})["pelawat"] || []} sectionId="pelawat" dateStr={dateStr} />
+      <ReadOnlySection title="HAL-HAL LAIN" text={form.halLain} images={(form.images || {})["halLain"] || []} sectionId="halLain" dateStr={dateStr} />
+
+      <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)", padding:20, display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+        <div>
+          <div style={{ fontSize:11, fontWeight:700, color:"var(--text3)", marginBottom:8, letterSpacing:"0.04em" }}>PELAPOR</div>
+          <div style={{ fontWeight:700, fontSize:13 }}>{form.pelapor || "-"}</div>
+        </div>
+        <div>
+          <div style={{ fontSize:11, fontWeight:700, color:"var(--text3)", marginBottom:8, letterSpacing:"0.04em" }}>DISEMAK OLEH</div>
+          <div style={{ fontWeight:700, fontSize:13 }}>{form.verifiedBy || form.disemakOleh || "-"}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HistoryList({ reports }) {
+  const [selectedDate, setSelectedDate] = useState("");
+  const selectedReport = reports.find(r => r.date === selectedDate);
+  const maxDate = yesterdayStr();
+
+  if (!reports.length) return (
+    <div style={{ textAlign:"center", padding:"40px 20px", color:"var(--text3)" }}>
+      <div style={{ fontSize:36, marginBottom:10 }}>📋</div>
+      <div style={{ fontWeight:600 }}>Tiada rekod laporan lama</div>
+    </div>
+  );
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+      <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:"var(--radius)", padding:16 }}>
+        <div style={{ fontSize:12, fontWeight:700, color:"var(--text3)", letterSpacing:"0.04em", marginBottom:8 }}>PILIH TARIKH LAPORAN</div>
+        <input
+          type="date"
+          value={selectedDate}
+          max={maxDate}
+          onChange={e => setSelectedDate(e.target.value)}
+          style={{ width:"100%", padding:"10px 12px", border:"1px solid var(--border)", borderRadius:8, fontSize:13, fontFamily:"inherit", outline:"none", background:"var(--surface)" }}
+        />
+      </div>
+
+      {!selectedDate ? (
+        <div style={{ textAlign:"center", padding:"36px 20px", color:"var(--text3)", fontSize:13, fontWeight:600 }}>
+          Pilih tarikh untuk melihat laporan lama.
+        </div>
+      ) : selectedReport ? (
+        <ReportReadOnlyBody report={selectedReport} teachers={[]} />
+      ) : (
+        <div style={{ textAlign:"center", padding:"36px 20px", color:"var(--text3)", fontSize:13, fontWeight:600 }}>
+          Tiada laporan direkodkan pada tarikh ini.
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SettingsPanel({ teachers, onSave, onClose }) {
   const [list, setList] = useState([...teachers]);
   const [newName, setNewName] = useState("");
@@ -882,7 +1077,6 @@ function SettingsPanel({ teachers, onSave, onClose }) {
 function PastReportView({ report, teachers, onBack }) {
   const [form] = useState({ ...report, ratings:{...report.ratings}, komen:{...report.komen}, images:{...(report.images||{})} });
   const dateStr = form.date;
-  const weekNum = getWeekNumber(new Date(dateStr+"T00:00:00"));
   return (
     <div style={{ maxWidth:720, margin:"0 auto", padding:"0 16px 60px" }}>
       <div style={{ position:"sticky", top:0, zIndex:100, background:"var(--bg)", padding:"16px 0 12px", borderBottom:"1px solid var(--border)", marginBottom:20 }}>
@@ -895,7 +1089,7 @@ function PastReportView({ report, teachers, onBack }) {
           {form.submitted ? <Badge color="green">Selesai</Badge> : <Badge color="neutral">Draf</Badge>}
         </div>
       </div>
-      <TodayReport report={form} teachers={teachers} dateStr={dateStr} onSave={()=>{}} onSubmit={()=>{}} isSaving={false} />
+      <ReportReadOnlyBody report={form} teachers={teachers} />
     </div>
   );
 }
@@ -1030,8 +1224,9 @@ function AdminDashboard({ pentadbir, onLogout, teachers }) {
     return () => { if (unsub) unsub(); };
   }, []);
 
-  const pending  = allReports.filter(r => r.submitted && !r.verified);
-  const verified = allReports.filter(r => r.verified);
+  const adminVisibleReports = allReports.filter(r => isBeforeToday(r.date));
+  const pending  = adminVisibleReports.filter(r => r.submitted && !r.verified);
+  const verified = adminVisibleReports.filter(r => r.verified);
 
   // Group pending by week
   const pendingByWeek = {};
@@ -1078,7 +1273,7 @@ function AdminDashboard({ pentadbir, onLogout, teachers }) {
               }
             </div>
           </div>
-          <TodayReport report={viewReport} teachers={teachers} dateStr={viewReport.date} onSave={()=>{}} onSubmit={()=>{}} isSaving={false} />
+          <ReportReadOnlyBody report={viewReport} teachers={teachers} />
           {!viewReport.verified && (
             <div style={{ position:"sticky", bottom:16, padding:"0 0 8px" }}>
               <button onClick={async () => { await handleVerifyDay(viewReport); setViewReport(null); }} style={{ width:"100%", padding:"14px", borderRadius:"var(--radius)", border:"none", background:"var(--green)", color:"#fff", fontSize:15, fontWeight:700, cursor:"pointer" }}>
@@ -1258,7 +1453,7 @@ function App() {
         setLoading(false);
       }).then(unsub => { unsubToday.current = unsub; });
       fbListenAllDates(all => {
-        setAllReports(all.filter(r => r.date !== today));
+        setAllReports(all.filter(r => isBeforeToday(r.date)));
       }).then(unsub => { unsubAll.current = unsub; });
     });
     return () => {
